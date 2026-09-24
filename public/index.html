@@ -447,9 +447,19 @@
             <span>Enable Scroll Lock Widget</span>
           </label>
 
-          <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; cursor: pointer; font-size: 0.9rem;">
+          <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; cursor: pointer; font-size: 0.9rem;">
             <input type="checkbox" id="set-show-magnifier" checked style="accent-color: #38bdf8; width: 16px; height: 16px;">
             <span>Enable Magnifier Widget</span>
+          </label>
+
+          <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; cursor: pointer; font-size: 0.9rem;">
+            <input type="checkbox" id="set-show-nav-search" checked style="accent-color: #38bdf8; width: 16px; height: 16px;">
+            <span>Enable Quick Search Bar in Navigation Widget</span>
+          </label>
+
+          <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; cursor: pointer; font-size: 0.9rem;">
+            <input type="checkbox" id="set-show-nav-home" checked style="accent-color: #38bdf8; width: 16px; height: 16px;">
+            <span>Enable Home Button in Navigation Widget</span>
           </label>
 
           <button id="reset-widget-pos-btn" type="button" style="width: 100%; padding: 10px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 10px; color: #38bdf8; font-weight: 600; font-size: 0.88rem; cursor: pointer; transition: all 0.2s ease;">
@@ -519,7 +529,9 @@
         touchPanic: saved.touchPanic || false,
         panicUrl: saved.panicUrl || 'https://classroom.google.com',
         showScrollLock: saved.showScrollLock !== undefined ? saved.showScrollLock : true,
-        showMagnifier: saved.showMagnifier !== undefined ? saved.showMagnifier : true
+        showMagnifier: saved.showMagnifier !== undefined ? saved.showMagnifier : true,
+        showNavSearch: saved.showNavSearch !== undefined ? saved.showNavSearch : true,
+        showNavHome: saved.showNavHome !== undefined ? saved.showNavHome : true
       };
     }
 
@@ -539,6 +551,8 @@
       $('set-panic-url').value = settings.panicUrl;
       $('set-show-scroll-lock').checked = settings.showScrollLock;
       $('set-show-magnifier').checked = settings.showMagnifier;
+      $('set-show-nav-search').checked = settings.showNavSearch;
+      $('set-show-nav-home').checked = settings.showNavHome;
 
       // Populate preset dropdown
       var select = $('preset-select');
@@ -574,11 +588,13 @@
         settings.panicUrl = $('set-panic-url').value.trim() || 'https://classroom.google.com';
         settings.showScrollLock = $('set-show-scroll-lock').checked;
         settings.showMagnifier = $('set-show-magnifier').checked;
+        settings.showNavSearch = $('set-show-nav-search').checked;
+        settings.showNavHome = $('set-show-nav-home').checked;
         settings.selectedPreset = $('preset-select').value;
         saveSettings(settings);
       };
 
-      ['set-auto-cloak', 'set-persistent-cloak', 'set-panic-key-enable', 'set-touch-panic', 'set-show-scroll-lock', 'set-show-magnifier', 'preset-select'].forEach(function (id) {
+      ['set-auto-cloak', 'set-persistent-cloak', 'set-panic-key-enable', 'set-touch-panic', 'set-show-scroll-lock', 'set-show-magnifier', 'set-show-nav-search', 'set-show-nav-home', 'preset-select'].forEach(function (id) {
         $(id).onchange = updateHandler;
       });
 
@@ -620,8 +636,9 @@
         var midX = Math.floor((window.innerWidth || 800) / 2 - 80);
         var midY = Math.floor((window.innerHeight || 600) / 2 - 20);
 
-        localStorage.setItem('heavenly_scroll_lock_pos', JSON.stringify({ left: midX, top: midY - 40 }));
-        localStorage.setItem('heavenly_magnifier_pos', JSON.stringify({ left: midX, top: midY + 40 }));
+        localStorage.setItem('heavenly_scroll_lock_pos', JSON.stringify({ left: midX, top: midY - 60 }));
+        localStorage.setItem('heavenly_magnifier_pos', JSON.stringify({ left: midX, top: midY }));
+        localStorage.setItem('heavenly_nav_pos', JSON.stringify({ left: midX, top: midY + 60 }));
         localStorage.setItem('heavenly_lens_pos', JSON.stringify({ left: midX, top: midY }));
 
         alert('Widget positions reset to middle of screen!');
