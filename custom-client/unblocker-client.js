@@ -340,21 +340,175 @@
 
           var pContainer = window.document.createElement('div');
           pContainer.id = 'heavenly-touch-panic-root';
-          pContainer.style.cssText = 'position:fixed;bottom:20px;left:20px;z-index:2147483647;user-select:none;font-family:"Outfit",sans-serif;';
+          pContainer.style.cssText = 'position:fixed;bottom:20px;left:20px;z-index:2147483647;user-select:none;-webkit-user-select:none;font-family:"Outfit",sans-serif;';
+
+          // Restore position from localStorage
+          try {
+            var savedPanicPos = localStorage.getItem('heavenly_panic_pos');
+            if (savedPanicPos) {
+              var pos = JSON.parse(savedPanicPos);
+              if (typeof pos.left === 'number' && typeof pos.top === 'number') {
+                pContainer.style.bottom = 'auto';
+                pContainer.style.left = pos.left + 'px';
+                pContainer.style.top = pos.top + 'px';
+              }
+            }
+          } catch (e) {}
 
           var pShadow = pContainer.attachShadow ? pContainer.attachShadow({ mode: 'open' }) : pContainer;
 
-          var btn = window.document.createElement('button');
-          btn.type = 'button';
-          btn.innerHTML = '🚨 PANIC';
-          btn.style.cssText = 'background:linear-gradient(135deg, #ef4444 0%, #dc2626 100%);color:#ffffff;border:none;padding:10px 16px;border-radius:20px;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 0 15px rgba(239,68,68,0.6);';
+          var pStyle = window.document.createElement('style');
+          pStyle.textContent = [
+            '.panic-wrapper { position: relative; display: inline-flex; align-items: center; justify-content: center; }',
+            '.panic-btn {',
+            '  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);',
+            '  color: #ffffff; border: none; border-radius: 20px; font-weight: 700; font-size: 13px;',
+            '  cursor: pointer; box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); padding: 10px 16px;',
+            '  display: flex; align-items: center; gap: 6px; white-space: nowrap;',
+            '  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); outline: none;',
+            '}',
+            '.panic-btn.minimized {',
+            '  width: 42px; height: 42px; padding: 0; border-radius: 50%; justify-content: center;',
+            '  opacity: 0.85; font-size: 18px;',
+            '}',
+            '.panic-btn.dragging { cursor: grabbing; box-shadow: 0 0 25px rgba(239, 68, 68, 0.9); }',
+            '.progress-svg { position: absolute; inset: -4px; width: calc(100% + 8px); height: calc(100% + 8px); pointer-events: none; opacity: 0; transition: opacity 0.2s; }',
+            '.progress-svg.active { opacity: 1; }',
+            '.progress-circle { fill: none; stroke: #38bdf8; stroke-width: 3; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; }'
+          ].join('\n');
 
-          btn.addEventListener('click', function () {
-            window.location.href = settings.panicUrl || 'https://classroom.google.com';
-          });
+          var wrapper = window.document.createElement('div');
+          wrapper.className = 'panic-wrapper';
+          wrapper.innerHTML = [
+            '<svg class="progress-svg" id="prog-svg" viewBox="0 0 50 50">',
+            '  <circle class="progress-circle" id="prog-circle" cx="25" cy="25" r="22" stroke-dasharray="138" stroke-dashoffset="138"></circle>',
+            '</svg>',
+            '<button type="button" class="panic-btn" id="p-btn">',
+            '  <span>🚨</span><span class="btn-label">PANIC</span>',
+            '</button>'
+          ].join('\n');
 
-          pShadow.appendChild(btn);
+          pShadow.appendChild(pStyle);
+          pShadow.appendChild(wrapper);
           window.document.body.appendChild(pContainer);
+
+          var btn = pShadow.querySelector('#p-btn');
+          var progSvg = pShadow.querySelector('#prog-svg');
+          var progCircle = pShadow.querySelector('#prog-circle');
+
+          var isMinimized = false;
+          var autoMinTimer = setTimeout(function () {
+            isMinimized = true;
+            btn.classList.add('minimized');
+            btn.querySelector('.btn-label').style.display = 'none';
+          }, 10000);
+
+          // Long-press drag variables
+          var holdTimer = null;
+          var holdAnimFrame = null;
+          var startTime = 0;
+          var HOLD_DURATION = 1500; // 1.5 seconds
+          var canDrag = false;
+          var isDragging = false;
+          var startX = 0, startY = 0;
+          var startLeft = 0, startTop = 0;
+
+          function triggerPanic() {
+            window.location.href = settings.panicUrl || 'https://classroom.google.com';
+          }
+
+          function cancelHold() {
+            if (holdTimer) clearTimeout(holdTimer);
+            if (holdAnimFrame) cancelAnimationFrame(holdAnimFrame);
+            holdTimer = null;
+            holdAnimFrame = null;
+            progSvg.classList.remove('active');
+            progCircle.style.strokeDashoffset = '138';
+          }
+
+          function updateProgress() {
+            var elapsed = Date.now() - startTime;
+            var progress = Math.min(1, elapsed / HOLD_DURATION);
+            var offset = 138 * (1 - progress);
+            progCircle.style.strokeDashoffset = offset.toString();
+
+            if (progress < 1) {
+              holdAnimFrame = requestAnimationFrame(updateProgress);
+            } else {
+              canDrag = true;
+              btn.classList.add('dragging');
+              progSvg.classList.remove('active');
+            }
+          }
+
+          var onDown = function (e) {
+            canDrag = false;
+            isDragging = false;
+            startX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+            startY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+
+            var rect = pContainer.getBoundingClientRect();
+            startLeft = rect.left;
+            startTop = rect.top;
+
+            startTime = Date.now();
+            progSvg.classList.add('active');
+            updateProgress();
+
+            window.addEventListener('mousemove', onMove, true);
+            window.addEventListener('mouseup', onUp, true);
+            window.addEventListener('touchmove', onMove, true);
+            window.addEventListener('touchend', onUp, true);
+          };
+
+          var onMove = function (e) {
+            var currentX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+            var currentY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+            var dx = currentX - startX;
+            var dy = currentY - startY;
+
+            if (!canDrag) {
+              if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+                cancelHold();
+              }
+              return;
+            }
+
+            isDragging = true;
+            pContainer.style.bottom = 'auto';
+            pContainer.style.right = 'auto';
+
+            var newLeft = startLeft + dx;
+            var newTop = startTop + dy;
+
+            var maxLeft = (window.innerWidth || 800) - pContainer.offsetWidth;
+            var maxTop = (window.innerHeight || 600) - pContainer.offsetHeight;
+
+            pContainer.style.left = Math.max(0, Math.min(newLeft, maxLeft)) + 'px';
+            pContainer.style.top = Math.max(0, Math.min(newTop, maxTop)) + 'px';
+          };
+
+          var onUp = function () {
+            cancelHold();
+            window.removeEventListener('mousemove', onMove, true);
+            window.removeEventListener('mouseup', onUp, true);
+            window.removeEventListener('touchmove', onMove, true);
+            window.removeEventListener('touchend', onUp, true);
+
+            if (canDrag && isDragging) {
+              btn.classList.remove('dragging');
+              try {
+                var rect = pContainer.getBoundingClientRect();
+                localStorage.setItem('heavenly_panic_pos', JSON.stringify({ left: rect.left, top: rect.top }));
+              } catch (e) {}
+            } else if (!isDragging) {
+              // Tap/click triggers panic directly regardless of minimized circle state
+              triggerPanic();
+            }
+          };
+
+          btn.addEventListener('mousedown', onDown);
+          btn.addEventListener('touchstart', onDown);
         }
 
         if (window.document && (window.document.readyState === 'interactive' || window.document.readyState === 'complete')) {
