@@ -8,7 +8,7 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 
   <style type="text/css">
     * {
@@ -19,76 +19,128 @@
 
     body {
       font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: radial-gradient(circle at 50% -20%, #1e293b 0%, #0f172a 50%, #030712 100%);
+      background-color: #030712;
+      background-image:
+        radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(129, 140, 248, 0.15) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(14, 165, 233, 0.1) 0px, transparent 50%);
       color: #f8fafc;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 24px 16px;
       overflow-x: hidden;
     }
 
-    /* Ambient background glow effect */
-    body::before {
-      content: '';
+    /* Ambient heavenly background glow */
+    .glow-orb {
       position: fixed;
-      top: 20%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 600px;
-      height: 400px;
-      background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, rgba(96, 165, 250, 0.05) 50%, transparent 80%);
+      border-radius: 50%;
+      filter: blur(80px);
       pointer-events: none;
       z-index: 0;
+    }
+
+    .glow-orb-1 {
+      top: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 500px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, rgba(99, 102, 241, 0.1) 60%, transparent 100%);
+    }
+
+    .glow-orb-2 {
+      bottom: -100px;
+      right: 10%;
+      width: 400px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, transparent 70%);
     }
 
     .container {
       position: relative;
       z-index: 1;
       width: 100%;
-      max-width: 800px;
-      background: rgba(15, 23, 42, 0.75);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      border-radius: 24px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(56, 189, 248, 0.1);
-      padding: 40px;
-      margin: 20px auto;
+      max-width: 680px;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 28px;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 25px 60px -15px rgba(0, 0, 0, 0.7),
+        0 0 40px -10px rgba(56, 189, 248, 0.25);
+      padding: 44px 36px 36px 36px;
+      margin: auto;
+    }
+
+    .brand-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .brand-icon {
+      width: 52px;
+      height: 52px;
+      margin: 0 auto 12px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(99, 102, 241, 0.2) 100%);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 16px;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+    }
+
+    .brand-icon svg {
+      width: 28px;
+      height: 28px;
+      fill: none;
+      stroke: #38bdf8;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.8));
     }
 
     h1 {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 3rem;
+      font-size: 2.75rem;
       font-weight: 700;
-      text-align: center;
-      letter-spacing: -1px;
-      background: linear-gradient(135deg, #e0f2fe 0%, #38bdf8 50%, #818cf8 100%);
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #ffffff 0%, #bae6fd 40%, #38bdf8 70%, #818cf8 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      margin-bottom: 24px;
-      text-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
+      line-height: 1.1;
+      margin-bottom: 8px;
+    }
+
+    .tagline {
+      font-size: 0.95rem;
+      color: #94a3b8;
+      font-weight: 400;
     }
 
     #error {
       display: none;
-      padding: 12px 20px;
-      margin-bottom: 24px;
-      border-radius: 12px;
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.4);
+      padding: 12px 18px;
+      margin-bottom: 20px;
+      border-radius: 14px;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.35);
       color: #fca5a5;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       text-align: center;
     }
 
     .search-form {
       display: flex;
-      gap: 12px;
-      margin-bottom: 32px;
-      position: relative;
+      gap: 10px;
+      margin-bottom: 20px;
     }
 
     .input-wrapper {
@@ -99,43 +151,43 @@
     input[type="text"] {
       width: 100%;
       padding: 16px 20px;
-      font-size: 1.05rem;
+      font-size: 1rem;
       font-family: inherit;
       color: #f8fafc;
-      background: rgba(30, 41, 59, 0.6);
+      background: rgba(30, 41, 59, 0.5);
       border: 1px solid rgba(148, 163, 184, 0.2);
-      border-radius: 14px;
+      border-radius: 16px;
       outline: none;
-      transition: all 0.3s ease;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     input[type="text"]:focus {
       border-color: #38bdf8;
-      background: rgba(30, 41, 59, 0.9);
-      box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15), 0 0 15px rgba(56, 189, 248, 0.2);
+      background: rgba(30, 41, 59, 0.85);
+      box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15), 0 0 20px rgba(56, 189, 248, 0.2);
     }
 
     input[type="text"]::placeholder {
-      color: #94a3b8;
+      color: #64748b;
     }
 
     input[type="submit"] {
-      padding: 16px 32px;
-      font-size: 1.05rem;
+      padding: 16px 28px;
+      font-size: 1rem;
       font-weight: 600;
       font-family: inherit;
-      color: #0f172a;
+      color: #030712;
       background: linear-gradient(135deg, #38bdf8 0%, #60a5fa 100%);
       border: none;
-      border-radius: 14px;
+      border-radius: 16px;
       cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 18px rgba(56, 189, 248, 0.35);
     }
 
     input[type="submit"]:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(56, 189, 248, 0.45);
+      box-shadow: 0 8px 25px rgba(56, 189, 248, 0.5);
       background: linear-gradient(135deg, #7dd3fc 0%, #93c5fd 100%);
     }
 
@@ -143,63 +195,88 @@
       transform: translateY(0);
     }
 
+    /* Feature Badges */
+    .features-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid rgba(56, 189, 248, 0.15);
+      border-radius: 20px;
+      font-size: 0.82rem;
+      color: #cbd5e1;
+      font-weight: 500;
+    }
+
+    /* Google Ad wrapper - collapse height when ad is empty or unrendered */
     #google-ad {
       text-align: center;
-      margin: 20px 0;
-      border-radius: 12px;
+      margin: 0 auto;
+      max-width: 100%;
       overflow: hidden;
     }
 
+    #google-ad:empty,
+    #google-ad ins:empty {
+      display: none !important;
+    }
+
     .info-section {
-      margin-top: 32px;
-      padding-top: 24px;
-      border-top: 1px solid rgba(148, 163, 184, 0.15);
+      padding-top: 20px;
+      border-top: 1px solid rgba(148, 163, 184, 0.12);
     }
 
     .info-section h3 {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.3rem;
+      font-size: 1.15rem;
       color: #e0f2fe;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
+      font-weight: 600;
     }
 
     .info-section p {
       color: #94a3b8;
-      line-height: 1.6;
-      margin-bottom: 12px;
-      font-size: 0.98rem;
+      line-height: 1.55;
+      margin-bottom: 8px;
+      font-size: 0.92rem;
     }
 
-    .info-section a {
-      color: #38bdf8;
-      text-decoration: none;
-      transition: color 0.2s ease;
-    }
-
-    .info-section a:hover {
-      color: #7dd3fc;
-      text-decoration: underline;
+    .info-section p:last-child {
+      margin-bottom: 0;
     }
 
     .footer {
-      margin-top: 32px;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(148, 163, 184, 0.08);
       text-align: center;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: #64748b;
     }
 
     .footer a {
       color: #38bdf8;
       text-decoration: none;
+      transition: color 0.2s ease;
     }
 
     .footer a:hover {
+      color: #7dd3fc;
       text-decoration: underline;
     }
 
     @media (max-width: 640px) {
       .container {
-        padding: 24px;
+        padding: 28px 20px 24px 20px;
       }
 
       h1 {
@@ -219,9 +296,24 @@
 
 <body>
 
+  <div class="glow-orb glow-orb-1"></div>
+  <div class="glow-orb glow-orb-2"></div>
+
   <div class="container">
 
-    <h1>Heavenly</h1>
+    <div class="brand-header">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9"></circle>
+          <path d="M12 3a9 9 0 0 0 0 18"></path>
+          <path d="M3 12h18"></path>
+          <path d="M12 3c2.5 3 4 6.5 4 9s-1.5 6-4 9"></path>
+          <path d="M12 3c-2.5 3-4 6.5-4 9s1.5 6 4 9"></path>
+        </svg>
+      </div>
+      <h1>Heavenly</h1>
+      <p class="tagline">Streamlined &bull; Seamless &bull; Ethereal Web Proxy</p>
+    </div>
 
     <div id="error"></div>
 
@@ -231,6 +323,12 @@
       </div>
       <input type="submit" value="Go" />
     </form>
+
+    <div class="features-list">
+      <span class="badge">⚡ On-The-Fly Processing</span>
+      <span class="badge">✨ Ethereal UI</span>
+      <span class="badge">🌐 High Performance</span>
+    </div>
 
     <div id="google-ad">
       <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
@@ -244,9 +342,8 @@
 
     <div class="info-section">
       <h3>About Heavenly</h3>
-      <p>Heavenly is a fast, streamlined web proxy designed to deliver smooth web navigation and seamless streaming.</p>
-      <p>It processes response data on-the-fly without heavy buffering, keeping URLs functional and performance high.</p>
-      <p>Source code is open source and available under AGPL-3.0.</p>
+      <p>Heavenly is a fast, streamlined web proxy built to provide smooth web browsing and uninterrupted data streaming.</p>
+      <p>It processes web responses dynamically in real time without buffering whole pages, preserving original relative URLs and site speed.</p>
     </div>
 
     <div class="footer">
@@ -265,7 +362,6 @@
       if (!url) return false;
 
       if (url.substr(0, 4) !== "http") {
-        // url heuristic: if it has at least one dot and doesn't have any spaces, assume it's a url that just omitted the protocol
         if (url.includes('.') && !url.includes(' ')) {
           url = "https://" + url;
         } else {
@@ -282,7 +378,6 @@
       if (start > -1) {
         var stop = search.indexOf('&', start);
         if (stop == -1) { stop = undefined; }
-        // +6 for "error="
         var err = search.substr(start + 6, stop);
         var $error = $('error');
         $error.innerText = $error.textContent = decodeURIComponent(err);
