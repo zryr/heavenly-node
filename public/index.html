@@ -346,10 +346,120 @@
       <p>It processes web responses dynamically in real time without buffering whole pages, preserving original relative URLs and site speed.</p>
     </div>
 
+    <div style="text-align: center; margin-top: 18px;">
+      <button type="button" id="open-settings-btn" style="background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(56, 189, 248, 0.3); color: #e0f2fe; padding: 8px 16px; border-radius: 20px; font-size: 0.88rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
+        <svg style="width: 16px; height: 16px; fill: none; stroke: #38bdf8; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        <span>Settings & Cloaking</span>
+      </button>
+    </div>
+
     <div class="footer">
       <p>Originally created by <a href="http://www.nfriedly.com/" target="_blank" rel="noopener">Nathan Friedly</a> &bull; Improved by <strong>Syshi</strong></p>
     </div>
 
+  </div>
+
+  <!-- Heavenly Settings Modal -->
+  <div id="settings-modal" style="display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.85); backdrop-filter: blur(16px); z-index: 99999; align-items: center; justify-content: center; padding: 20px; overflow-y: auto;">
+    <div style="background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(56, 189, 248, 0.2); width: 100%; max-width: 580px; padding: 28px; color: #f8fafc; font-family: 'Outfit', sans-serif;">
+
+      <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(148, 163, 184, 0.15); padding-bottom: 16px; margin-bottom: 20px;">
+        <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.4rem; color: #38bdf8; margin: 0; display: flex; align-items: center; gap: 8px;">
+          ⚙️ Settings & Privacy Controls
+        </h2>
+        <button id="close-settings-btn" type="button" style="background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer;">✕</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 20px; max-height: 70vh; overflow-y: auto; padding-right: 6px;">
+
+        <!-- Section 1: Cloaking -->
+        <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(56, 189, 248, 0.15); border-radius: 16px; padding: 16px;">
+          <h3 style="font-size: 1.05rem; color: #e0f2fe; margin-bottom: 6px; font-weight: 600;">🛡️ Tab Cloaking</h3>
+          <p style="font-size: 0.83rem; color: #94a3b8; margin-bottom: 12px; line-height: 1.4;">Disguise your browser tab title and favicon to look like standard school/work apps.</p>
+
+          <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; cursor: pointer; font-size: 0.9rem;">
+            <input type="checkbox" id="set-auto-cloak" style="accent-color: #38bdf8; width: 16px; height: 16px;">
+            <span>Auto Tab Cloaking (Cloaks tab title/icon when switching to another tab)</span>
+          </label>
+
+          <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; cursor: pointer; font-size: 0.9rem;">
+            <input type="checkbox" id="set-persistent-cloak" style="accent-color: #38bdf8; width: 16px; height: 16px;">
+            <span>Persistent Cloaking (Keeps tab disguised continuously)</span>
+          </label>
+
+          <div style="margin-bottom: 12px;">
+            <label style="font-size: 0.85rem; color: #cbd5e1; display: block; margin-bottom: 4px;">Cloak Preset:</label>
+            <select id="preset-select" style="width: 100%; padding: 8px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 10px; color: #f8fafc; font-family: inherit; font-size: 0.88rem;">
+              <option value="classroom">Google Classroom (Default)</option>
+              <option value="drive">Google Drive</option>
+              <option value="canvas">Canvas LMS</option>
+              <option value="khan">Khan Academy</option>
+            </select>
+          </div>
+
+          <!-- Custom Preset Creator -->
+          <div style="border-top: 1px solid rgba(148, 163, 184, 0.1); padding-top: 10px; margin-top: 10px;">
+            <span style="font-size: 0.85rem; color: #cbd5e1; font-weight: 600;">Custom Cloak Preset</span>
+            <div style="display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap;">
+              <input type="text" id="custom-title" placeholder="Title (e.g. Classes)" style="flex: 1; min-width: 140px; padding: 6px 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; color: #fff; font-size: 0.83rem;">
+              <input type="text" id="custom-icon" placeholder="Icon URL (.ico/.png)" style="flex: 1; min-width: 140px; padding: 6px 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; color: #fff; font-size: 0.83rem;">
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+              <button id="save-custom-preset-btn" type="button" style="padding: 6px 12px; background: #38bdf8; border: none; border-radius: 8px; color: #030712; font-weight: 600; font-size: 0.8rem; cursor: pointer;">Save Custom Preset</button>
+              <button id="delete-custom-preset-btn" type="button" style="padding: 6px 12px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 8px; color: #fca5a5; font-weight: 600; font-size: 0.8rem; cursor: pointer;">Delete Selected</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Panic Features -->
+        <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(56, 189, 248, 0.15); border-radius: 16px; padding: 16px;">
+          <h3 style="font-size: 1.05rem; color: #e0f2fe; margin-bottom: 6px; font-weight: 600;">🚨 Panic Controls</h3>
+          <p style="font-size: 0.83rem; color: #94a3b8; margin-bottom: 12px; line-height: 1.4;">Instantly redirect the page to a safe educational site when triggered.</p>
+
+          <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; cursor: pointer; font-size: 0.9rem;">
+            <input type="checkbox" id="set-panic-key-enable" style="accent-color: #38bdf8; width: 16px; height: 16px;">
+            <span>Enable Panic Key Shortcut</span>
+          </label>
+
+          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 12px;">
+            <label style="font-size: 0.85rem; color: #cbd5e1;">Panic Key:</label>
+            <input type="text" id="set-panic-key" value="`" maxlength="10" style="width: 70px; text-align: center; padding: 4px 8px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; color: #38bdf8; font-weight: 700; font-size: 0.9rem;">
+          </div>
+
+          <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; cursor: pointer; font-size: 0.9rem;">
+            <input type="checkbox" id="set-touch-panic" style="accent-color: #38bdf8; width: 16px; height: 16px;">
+            <span>Enable Touch Panic Overlay (Floating red panic button for touchscreens)</span>
+          </label>
+
+          <div>
+            <label style="font-size: 0.85rem; color: #cbd5e1; display: block; margin-bottom: 4px;">Panic Redirect URL:</label>
+            <input type="text" id="set-panic-url" value="https://classroom.google.com" style="width: 100%; padding: 8px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 10px; color: #f8fafc; font-family: inherit; font-size: 0.88rem;">
+          </div>
+        </div>
+
+        <!-- Section 3: Widget Controls & Reset -->
+        <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(56, 189, 248, 0.15); border-radius: 16px; padding: 16px;">
+          <h3 style="font-size: 1.05rem; color: #e0f2fe; margin-bottom: 6px; font-weight: 600;">🎛️ Proxied Page Widgets</h3>
+          <p style="font-size: 0.83rem; color: #94a3b8; margin-bottom: 12px; line-height: 1.4;">Toggle widget visibility or reset their positions if they get off-screen.</p>
+
+          <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; cursor: pointer; font-size: 0.9rem;">
+            <input type="checkbox" id="set-show-scroll-lock" checked style="accent-color: #38bdf8; width: 16px; height: 16px;">
+            <span>Enable Scroll Lock Widget</span>
+          </label>
+
+          <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; cursor: pointer; font-size: 0.9rem;">
+            <input type="checkbox" id="set-show-magnifier" checked style="accent-color: #38bdf8; width: 16px; height: 16px;">
+            <span>Enable Magnifier Widget</span>
+          </label>
+
+          <button id="reset-widget-pos-btn" type="button" style="width: 100%; padding: 10px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 10px; color: #38bdf8; font-weight: 600; font-size: 0.88rem; cursor: pointer; transition: all 0.2s ease;">
+            📍 Reset All Widget Positions to Middle of Screen
+          </button>
+        </div>
+
+      </div>
+
+    </div>
   </div>
 
   <script>
@@ -385,9 +495,143 @@
       }
     }
 
+    // --- Heavenly Settings Manager ---
+    var DEFAULT_PRESETS = {
+      classroom: { title: "Classes", icon: "https://ssl.gstatic.com/classroom/favicon.png" },
+      drive: { title: "My Drive - Google Drive", icon: "https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" },
+      canvas: { title: "Dashboard", icon: "https://du1ux2871uqvu.cloudfront.net/dist/images/favicon-e10d657a73.ico" },
+      khan: { title: "Dashboard | Khan Academy", icon: "https://www.khanacademy.org/favicon.ico" }
+    };
+
+    function loadSettings() {
+      var saved = {};
+      try {
+        saved = JSON.parse(localStorage.getItem('heavenly_settings') || '{}');
+      } catch (e) {}
+
+      return {
+        autoCloak: saved.autoCloak !== undefined ? saved.autoCloak : true,
+        persistentCloak: saved.persistentCloak || false,
+        selectedPreset: saved.selectedPreset || 'classroom',
+        customPresets: saved.customPresets || {},
+        panicKeyEnable: saved.panicKeyEnable || false,
+        panicKey: saved.panicKey || '`',
+        touchPanic: saved.touchPanic || false,
+        panicUrl: saved.panicUrl || 'https://classroom.google.com',
+        showScrollLock: saved.showScrollLock !== undefined ? saved.showScrollLock : true,
+        showMagnifier: saved.showMagnifier !== undefined ? saved.showMagnifier : true
+      };
+    }
+
+    function saveSettings(settings) {
+      try {
+        localStorage.setItem('heavenly_settings', JSON.stringify(settings));
+      } catch (e) {}
+    }
+
+    function syncSettingsToUI() {
+      var settings = loadSettings();
+      $('set-auto-cloak').checked = settings.autoCloak;
+      $('set-persistent-cloak').checked = settings.persistentCloak;
+      $('set-panic-key-enable').checked = settings.panicKeyEnable;
+      $('set-panic-key').value = settings.panicKey;
+      $('set-touch-panic').checked = settings.touchPanic;
+      $('set-panic-url').value = settings.panicUrl;
+      $('set-show-scroll-lock').checked = settings.showScrollLock;
+      $('set-show-magnifier').checked = settings.showMagnifier;
+
+      // Populate preset dropdown
+      var select = $('preset-select');
+      select.innerHTML = '';
+
+      var allPresets = Object.assign({}, DEFAULT_PRESETS, settings.customPresets);
+      for (var key in allPresets) {
+        var opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = allPresets[key].title + (DEFAULT_PRESETS[key] ? '' : ' (Custom)');
+        if (key === settings.selectedPreset) opt.selected = true;
+        select.appendChild(opt);
+      }
+    }
+
+    function bindSettingsEvents() {
+      $('open-settings-btn').onclick = function () {
+        syncSettingsToUI();
+        $('settings-modal').style.display = 'flex';
+      };
+
+      $('close-settings-btn').onclick = function () {
+        $('settings-modal').style.display = 'none';
+      };
+
+      var updateHandler = function () {
+        var settings = loadSettings();
+        settings.autoCloak = $('set-auto-cloak').checked;
+        settings.persistentCloak = $('set-persistent-cloak').checked;
+        settings.panicKeyEnable = $('set-panic-key-enable').checked;
+        settings.panicKey = $('set-panic-key').value.trim();
+        settings.touchPanic = $('set-touch-panic').checked;
+        settings.panicUrl = $('set-panic-url').value.trim() || 'https://classroom.google.com';
+        settings.showScrollLock = $('set-show-scroll-lock').checked;
+        settings.showMagnifier = $('set-show-magnifier').checked;
+        settings.selectedPreset = $('preset-select').value;
+        saveSettings(settings);
+      };
+
+      ['set-auto-cloak', 'set-persistent-cloak', 'set-panic-key-enable', 'set-touch-panic', 'set-show-scroll-lock', 'set-show-magnifier', 'preset-select'].forEach(function (id) {
+        $(id).onchange = updateHandler;
+      });
+
+      ['set-panic-key', 'set-panic-url'].forEach(function (id) {
+        $(id).oninput = updateHandler;
+      });
+
+      // Custom preset save
+      $('save-custom-preset-btn').onclick = function () {
+        var title = $('custom-title').value.trim();
+        var icon = $('custom-icon').value.trim();
+        if (!title) return alert('Please enter a preset title.');
+
+        var settings = loadSettings();
+        var customId = 'custom_' + Date.now();
+        settings.customPresets[customId] = { title: title, icon: icon || 'https://ssl.gstatic.com/classroom/favicon.png' };
+        settings.selectedPreset = customId;
+        saveSettings(settings);
+        syncSettingsToUI();
+        $('custom-title').value = '';
+        $('custom-icon').value = '';
+      };
+
+      // Custom preset delete
+      $('delete-custom-preset-btn').onclick = function () {
+        var settings = loadSettings();
+        var current = $('preset-select').value;
+        if (DEFAULT_PRESETS[current]) {
+          return alert('Cannot delete built-in presets.');
+        }
+        delete settings.customPresets[current];
+        settings.selectedPreset = 'classroom';
+        saveSettings(settings);
+        syncSettingsToUI();
+      };
+
+      // Reset positions to middle of screen
+      $('reset-widget-pos-btn').onclick = function () {
+        var midX = Math.floor((window.innerWidth || 800) / 2 - 80);
+        var midY = Math.floor((window.innerHeight || 600) / 2 - 20);
+
+        localStorage.setItem('heavenly_scroll_lock_pos', JSON.stringify({ left: midX, top: midY - 40 }));
+        localStorage.setItem('heavenly_magnifier_pos', JSON.stringify({ left: midX, top: midY + 40 }));
+        localStorage.setItem('heavenly_lens_pos', JSON.stringify({ left: midX, top: midY }));
+
+        alert('Widget positions reset to middle of screen!');
+      };
+    }
+
     window.onload = function () {
       $('url').focus();
       checkError();
+      bindSettingsEvents();
     }
   </script>
 

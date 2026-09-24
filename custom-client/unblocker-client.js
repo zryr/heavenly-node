@@ -245,10 +245,142 @@
     };
   }
 
+  function initHeavenlyCloakAndPanic(window) {
+    try {
+      if (window !== window.top) return;
+
+      var DEFAULT_PRESETS = {
+        classroom: { title: "Classes", icon: "https://ssl.gstatic.com/classroom/favicon.png" },
+        drive: { title: "My Drive - Google Drive", icon: "https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" },
+        canvas: { title: "Dashboard", icon: "https://du1ux2871uqvu.cloudfront.net/dist/images/favicon-e10d657a73.ico" },
+        khan: { title: "Dashboard | Khan Academy", icon: "https://www.khanacademy.org/favicon.ico" }
+      };
+
+      function loadSettings() {
+        var saved = {};
+        try {
+          saved = JSON.parse(localStorage.getItem('heavenly_settings') || '{}');
+        } catch (e) {}
+
+        return {
+          autoCloak: saved.autoCloak !== undefined ? saved.autoCloak : true,
+          persistentCloak: saved.persistentCloak || false,
+          selectedPreset: saved.selectedPreset || 'classroom',
+          customPresets: saved.customPresets || {},
+          panicKeyEnable: saved.panicKeyEnable || false,
+          panicKey: saved.panicKey || '`',
+          touchPanic: saved.touchPanic || false,
+          panicUrl: saved.panicUrl || 'https://classroom.google.com',
+          showScrollLock: saved.showScrollLock !== undefined ? saved.showScrollLock : true,
+          showMagnifier: saved.showMagnifier !== undefined ? saved.showMagnifier : true
+        };
+      }
+
+      var settings = loadSettings();
+      var originalTitle = window.document.title;
+      var originalFavicon = null;
+
+      var favEl = window.document.querySelector("link[rel*='icon']");
+      if (favEl) originalFavicon = favEl.href;
+
+      function getPresetData() {
+        var allPresets = Object.assign({}, DEFAULT_PRESETS, settings.customPresets);
+        return allPresets[settings.selectedPreset] || DEFAULT_PRESETS.classroom;
+      }
+
+      function applyCloak(isCloaked) {
+        if (!window.document) return;
+        var preset = getPresetData();
+        if (isCloaked) {
+          if (!originalTitle) originalTitle = window.document.title;
+          window.document.title = preset.title;
+
+          var link = window.document.querySelector("link[rel*='icon']") || window.document.createElement('link');
+          link.type = 'image/x-icon';
+          link.rel = 'shortcut icon';
+          link.href = preset.icon;
+          window.document.getElementsByTagName('head')[0].appendChild(link);
+        } else {
+          if (originalTitle) window.document.title = originalTitle;
+          if (originalFavicon) {
+            var link2 = window.document.querySelector("link[rel*='icon']");
+            if (link2) link2.href = originalFavicon;
+          }
+        }
+      }
+
+      // 1. Persistent Cloak
+      if (settings.persistentCloak) {
+        applyCloak(true);
+      } else if (settings.autoCloak) {
+        // 2. Auto Tab Cloak on tab blur/switch
+        window.addEventListener('visibilitychange', function () {
+          if (window.document.hidden) {
+            applyCloak(true);
+          } else {
+            applyCloak(false);
+          }
+        });
+      }
+
+      // 3. Panic Key Shortcut
+      if (settings.panicKeyEnable && settings.panicKey) {
+        window.addEventListener('keydown', function (e) {
+          if (e.key === settings.panicKey || e.code === settings.panicKey) {
+            window.location.href = settings.panicUrl || 'https://classroom.google.com';
+          }
+        }, true);
+      }
+
+      // 4. Touch Panic Overlay Button
+      if (settings.touchPanic) {
+        function injectPanicOverlay() {
+          if (!window.document || !window.document.body) return;
+          if (window.document.getElementById('heavenly-touch-panic-root')) return;
+
+          var pContainer = window.document.createElement('div');
+          pContainer.id = 'heavenly-touch-panic-root';
+          pContainer.style.cssText = 'position:fixed;bottom:20px;left:20px;z-index:2147483647;user-select:none;font-family:"Outfit",sans-serif;';
+
+          var pShadow = pContainer.attachShadow ? pContainer.attachShadow({ mode: 'open' }) : pContainer;
+
+          var btn = window.document.createElement('button');
+          btn.type = 'button';
+          btn.innerHTML = '🚨 PANIC';
+          btn.style.cssText = 'background:linear-gradient(135deg, #ef4444 0%, #dc2626 100%);color:#ffffff;border:none;padding:10px 16px;border-radius:20px;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 0 15px rgba(239,68,68,0.6);';
+
+          btn.addEventListener('click', function () {
+            window.location.href = settings.panicUrl || 'https://classroom.google.com';
+          });
+
+          pShadow.appendChild(btn);
+          window.document.body.appendChild(pContainer);
+        }
+
+        if (window.document && (window.document.readyState === 'interactive' || window.document.readyState === 'complete')) {
+          injectPanicOverlay();
+        } else if (window.document) {
+          window.document.addEventListener('DOMContentLoaded', injectPanicOverlay);
+        }
+      }
+
+    } catch (e) {
+      console.error('Error initializing Heavenly Cloak & Panic:', e);
+    }
+  }
+
   function initHeavenlyWidgets(window) {
     try {
       if (window !== window.top) return; // Only show in main top window
       if (window.document && window.document.getElementById('heavenly-scroll-lock-root')) return;
+
+      var settings = {};
+      try {
+        settings = JSON.parse(localStorage.getItem('heavenly_settings') || '{}');
+      } catch (e) {}
+
+      var showScrollLock = settings.showScrollLock !== undefined ? settings.showScrollLock : true;
+      var showMagnifier = settings.showMagnifier !== undefined ? settings.showMagnifier : true;
 
       var scrollLockEnabled = false;
 
@@ -476,125 +608,129 @@
         if (window.document.getElementById('heavenly-scroll-lock-root')) return;
 
         // --- 1. SCROLL LOCK WIDGET ---
-        var lockContainer = window.document.createElement('div');
-        lockContainer.id = 'heavenly-scroll-lock-root';
-        lockContainer.style.cssText = 'position:fixed;z-index:2147483646;user-select:none;-webkit-user-select:none;font-family:"Outfit",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;';
+        if (showScrollLock) {
+          var lockContainer = window.document.createElement('div');
+          lockContainer.id = 'heavenly-scroll-lock-root';
+          lockContainer.style.cssText = 'position:fixed;z-index:2147483646;user-select:none;-webkit-user-select:none;font-family:"Outfit",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;';
 
-        var lockShadow = lockContainer.attachShadow ? lockContainer.attachShadow({ mode: 'open' }) : lockContainer;
+          var lockShadow = lockContainer.attachShadow ? lockContainer.attachShadow({ mode: 'open' }) : lockContainer;
 
-        var lockStyle = window.document.createElement('style');
-        lockStyle.textContent = widgetCss;
+          var lockStyle = window.document.createElement('style');
+          lockStyle.textContent = widgetCss;
 
-        var lockWidget = window.document.createElement('div');
-        lockWidget.className = 'heavenly-widget';
-        lockWidget.innerHTML = [
-          '<div class="mini-icon" title="Scroll Lock (Click to expand)">',
-          '  <svg class="title-icon" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0 0 18M3 12h18"></path><circle cx="12" cy="12" r="9"></circle></svg>',
-          '</div>',
-          '<div class="widget-content">',
-          '  <div class="drag-handle" title="Click and drag to move">',
-          '    <svg class="title-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 3a9 9 0 0 0 0 18"></path><path d="M3 12h18"></path></svg>',
-          '    <span>Scroll Lock</span>',
-          '  </div>',
-          '  <button type="button" class="btn-toggle" id="toggle-btn"><span>🔓 OFF</span></button>',
-          '</div>'
-        ].join('\n');
+          var lockWidget = window.document.createElement('div');
+          lockWidget.className = 'heavenly-widget';
+          lockWidget.innerHTML = [
+            '<div class="mini-icon" title="Scroll Lock (Click to expand)">',
+            '  <svg class="title-icon" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0 0 18M3 12h18"></path><circle cx="12" cy="12" r="9"></circle></svg>',
+            '</div>',
+            '<div class="widget-content">',
+            '  <div class="drag-handle" title="Click and drag to move">',
+            '    <svg class="title-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 3a9 9 0 0 0 0 18"></path><path d="M3 12h18"></path></svg>',
+            '    <span>Scroll Lock</span>',
+            '  </div>',
+            '  <button type="button" class="btn-toggle" id="toggle-btn"><span>🔓 OFF</span></button>',
+            '</div>'
+          ].join('\n');
 
-        lockShadow.appendChild(lockStyle);
-        lockShadow.appendChild(lockWidget);
-        window.document.body.appendChild(lockContainer);
+          lockShadow.appendChild(lockStyle);
+          lockShadow.appendChild(lockWidget);
+          window.document.body.appendChild(lockContainer);
 
-        var lockToggleBtn = lockShadow.querySelector('#toggle-btn');
-        lockToggleBtn.addEventListener('click', function (e) {
-          e.stopPropagation();
-          scrollLockEnabled = !scrollLockEnabled;
-          if (scrollLockEnabled) {
-            lockToggleBtn.classList.add('active');
-            lockToggleBtn.innerHTML = '<span>🔒 ON</span>';
-          } else {
-            lockToggleBtn.classList.remove('active');
-            lockToggleBtn.innerHTML = '<span>🔓 OFF</span>';
-          }
-        });
+          var lockToggleBtn = lockShadow.querySelector('#toggle-btn');
+          lockToggleBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            scrollLockEnabled = !scrollLockEnabled;
+            if (scrollLockEnabled) {
+              lockToggleBtn.classList.add('active');
+              lockToggleBtn.innerHTML = '<span>🔒 ON</span>';
+            } else {
+              lockToggleBtn.classList.remove('active');
+              lockToggleBtn.innerHTML = '<span>🔓 OFF</span>';
+            }
+          });
 
-        attachWidgetBehaviors(lockContainer, lockWidget, 'heavenly_scroll_lock_pos', 20, 20);
+          attachWidgetBehaviors(lockContainer, lockWidget, 'heavenly_scroll_lock_pos', 20, 20);
+        }
 
         // --- 2. MAGNIFIER WIDGET & LENS FRAME ---
-        var magContainer = window.document.createElement('div');
-        magContainer.id = 'heavenly-magnifier-root';
-        magContainer.style.cssText = 'position:fixed;z-index:2147483646;user-select:none;-webkit-user-select:none;font-family:"Outfit",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;';
+        if (showMagnifier) {
+          var magContainer = window.document.createElement('div');
+          magContainer.id = 'heavenly-magnifier-root';
+          magContainer.style.cssText = 'position:fixed;z-index:2147483646;user-select:none;-webkit-user-select:none;font-family:"Outfit",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;';
 
-        var magShadow = magContainer.attachShadow ? magContainer.attachShadow({ mode: 'open' }) : magContainer;
+          var magShadow = magContainer.attachShadow ? magContainer.attachShadow({ mode: 'open' }) : magContainer;
 
-        var magStyle = window.document.createElement('style');
-        magStyle.textContent = widgetCss + [
-          '.lens-frame {',
-          '  position: fixed;',
-          '  border: 2px solid #38bdf8;',
-          '  border-radius: 16px;',
-          '  box-shadow: 0 0 25px rgba(56, 189, 248, 0.4), 0 10px 30px rgba(0, 0, 0, 0.5);',
-          '  background: rgba(15, 23, 42, 0.95);',
-          '  overflow: hidden;',
-          '  z-index: 2147483645;',
-          '  display: flex;',
-          '  flex-direction: column;',
-          '}',
-          '.lens-header {',
-          '  height: 28px;',
-          '  background: rgba(30, 41, 59, 0.95);',
-          '  border-bottom: 1px solid rgba(56, 189, 248, 0.3);',
-          '  display: flex;',
-          '  align-items: center;',
-          '  justify-content: space-between;',
-          '  padding: 0 8px;',
-          '  font-size: 11px;',
-          '  font-weight: 600;',
-          '  color: #e0f2fe;',
-          '  cursor: grab;',
-          '}',
-          '.lens-header:active { cursor: grabbing; }',
-          '.lens-view {',
-          '  flex: 1;',
-          '  position: relative;',
-          '  overflow: hidden;',
-          '  background: #ffffff;',
-          '}',
-          '.lens-mirror {',
-          '  position: absolute;',
-          '  transform-origin: 0 0;',
-          '  pointer-events: none;',
-          '}',
-          '.btn-close-lens {',
-          '  background: none; border: none; color: #94a3b8; font-size: 14px;',
-          '  cursor: pointer; padding: 0 4px; line-height: 1;',
-          '}',
-          '.btn-close-lens:hover { color: #ef4444; }'
-        ].join('\n');
+          var magStyle = window.document.createElement('style');
+          magStyle.textContent = widgetCss + [
+            '.lens-frame {',
+            '  position: fixed;',
+            '  border: 2px solid #38bdf8;',
+            '  border-radius: 16px;',
+            '  box-shadow: 0 0 25px rgba(56, 189, 248, 0.4), 0 10px 30px rgba(0, 0, 0, 0.5);',
+            '  background: rgba(15, 23, 42, 0.95);',
+            '  overflow: hidden;',
+            '  z-index: 2147483645;',
+            '  display: flex;',
+            '  flex-direction: column;',
+            '}',
+            '.lens-header {',
+            '  height: 28px;',
+            '  background: rgba(30, 41, 59, 0.95);',
+            '  border-bottom: 1px solid rgba(56, 189, 248, 0.3);',
+            '  display: flex;',
+            '  align-items: center;',
+            '  justify-content: space-between;',
+            '  padding: 0 8px;',
+            '  font-size: 11px;',
+            '  font-weight: 600;',
+            '  color: #e0f2fe;',
+            '  cursor: grab;',
+            '}',
+            '.lens-header:active { cursor: grabbing; }',
+            '.lens-view {',
+            '  flex: 1;',
+            '  position: relative;',
+            '  overflow: hidden;',
+            '  background: #ffffff;',
+            '}',
+            '.lens-mirror {',
+            '  position: absolute;',
+            '  transform-origin: 0 0;',
+            '  pointer-events: none;',
+            '}',
+            '.btn-close-lens {',
+            '  background: none; border: none; color: #94a3b8; font-size: 14px;',
+            '  cursor: pointer; padding: 0 4px; line-height: 1;',
+            '}',
+            '.btn-close-lens:hover { color: #ef4444; }'
+          ].join('\n');
 
-        var magWidget = window.document.createElement('div');
-        magWidget.className = 'heavenly-widget';
-        magWidget.innerHTML = [
-          '<div class="mini-icon" title="Magnifier (Click to expand)">',
-          '  <svg class="title-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
-          '</div>',
-          '<div class="widget-content">',
-          '  <div class="drag-handle" title="Click and drag to move">',
-          '    <svg class="title-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
-          '    <span>Magnifier</span>',
-          '  </div>',
-          '  <button type="button" class="btn-toggle" id="mag-toggle-btn"><span>🔍 OFF</span></button>',
-          '  <button type="button" class="btn-ctrl" id="zoom-out-btn" title="Zoom Out">-</button>',
-          '  <span id="zoom-label" style="font-size:11px;font-weight:700;color:#38bdf8;">2.0x</span>',
-          '  <button type="button" class="btn-ctrl" id="zoom-in-btn" title="Zoom In">+</button>',
-          '  <button type="button" class="btn-ctrl" id="size-btn" title="Lens Size">Size</button>',
-          '</div>'
-        ].join('\n');
+          var magWidget = window.document.createElement('div');
+          magWidget.className = 'heavenly-widget';
+          magWidget.innerHTML = [
+            '<div class="mini-icon" title="Magnifier (Click to expand)">',
+            '  <svg class="title-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
+            '</div>',
+            '<div class="widget-content">',
+            '  <div class="drag-handle" title="Click and drag to move">',
+            '    <svg class="title-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
+            '    <span>Magnifier</span>',
+            '  </div>',
+            '  <button type="button" class="btn-toggle" id="mag-toggle-btn"><span>🔍 OFF</span></button>',
+            '  <button type="button" class="btn-ctrl" id="zoom-out-btn" title="Zoom Out">-</button>',
+            '  <span id="zoom-label" style="font-size:11px;font-weight:700;color:#38bdf8;">2.0x</span>',
+            '  <button type="button" class="btn-ctrl" id="zoom-in-btn" title="Zoom In">+</button>',
+            '  <button type="button" class="btn-ctrl" id="size-btn" title="Lens Size">Size</button>',
+            '</div>'
+          ].join('\n');
 
-        magShadow.appendChild(magStyle);
-        magShadow.appendChild(magWidget);
-        window.document.body.appendChild(magContainer);
+          magShadow.appendChild(magStyle);
+          magShadow.appendChild(magWidget);
+          window.document.body.appendChild(magContainer);
 
-        attachWidgetBehaviors(magContainer, magWidget, 'heavenly_magnifier_pos', 70, 20);
+          attachWidgetBehaviors(magContainer, magWidget, 'heavenly_magnifier_pos', 70, 20);
+        }
 
         // --- Magnifier Lens Frame Logic ---
         var magEnabled = false;
@@ -802,6 +938,7 @@
     initAppendBodyIframe(config, window);
     initWebSockets(config, window);
     initPushState(config, window);
+    initHeavenlyCloakAndPanic(window);
     initHeavenlyWidgets(window);
     if (window === global) {
       // leave no trace
