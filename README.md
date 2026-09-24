@@ -1,8 +1,8 @@
-# nodeunblocker.com
+# Heavenly Node
 
-Evade internet censorship!
+Heavenly Node - Web application service, improved by Syshi.
 
-The original nodeunblocker.com is gone, but it's now easier than ever to deploy your own copy.
+Easily deploy your own copy of Heavenly Node.
 
 [![Deploy to Bluemix](https://cloud.ibm.com/devops/setup/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/nfriedly/nodeunblocker.com)
 [![Deploy to AWS](https://oneclick.amplifyapp.com/button.svg)](https://console.aws.amazon.com/amplify/home#/deploy?repo=https://github.com/nfriedly/nodeunblocker.com)
@@ -46,4 +46,4 @@ The the core of the nodeunblocker.com has been extracted into a [standalone libr
 
 This project is released under the terms of the [GNU Affero General Public License version 3](https://www.gnu.org/licenses/agpl-3.0.html).
 
-All source code is copyright [Nathan Friedly](http://nfriedly.com/).
+Original Node Unblocker project by [Nathan Friedly](http://nfriedly.com/), improved by **Syshi**.

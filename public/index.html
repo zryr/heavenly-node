@@ -1,159 +1,217 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-  <title>Node Unblocker</title>
+  <meta charset="UTF-8">
+  <title>Heavenly</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- header font -->
-  <link href="//fonts.googleapis.com/css?family=Orbitron" rel="stylesheet" type="text/css">
-
-  <!-- body font -->
-  <link href="//fonts.googleapis.com/css?family=Droid+Sans" rel="stylesheet" type="text/css">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 
   <style type="text/css">
-    /* fonts */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
-      font-family: 'Droid Sans', arial, serif;
-      letter-spacing: 1px;
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 50% -20%, #1e293b 0%, #0f172a 50%, #030712 100%);
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    /* Ambient background glow effect */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 20%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, rgba(96, 165, 250, 0.05) 50%, transparent 80%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 800px;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(56, 189, 248, 0.1);
+      padding: 40px;
+      margin: 20px auto;
     }
 
     h1 {
-      font-family: 'Orbitron', arial, serif;
-      letter-spacing: 2px;
-    }
-
-    h2,
-    h3,
-    h4,
-    h5,
-    h6 {
-      letter-spacing: 2px;
-      font-weight: normal;
-    }
-
-    /* colors */
-    body {
-      background-color: #000306;
-      color: white;
-    }
-
-    .container {
-      background-color: #3F4038;
-      border-color: #5B3E38
-    }
-
-    a {
-      color: #62BECB;
-    }
-
-    a:hover {
-      color: #82DEEB
-    }
-
-    #error {
-      border: 1px dotted white;
-      background: brown;
-    }
-
-    /* stripes and borders */
-
-    .main {
-      background-repeat: repeat-x;
-      background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAAB9CAIAAADbWVFQAAADd0lEQVR4nO3d6VbbMBiE4Tcm3Tf2tRfSf+393wd03/dCk/6AgjF2otiSvpGsuYBY52HO4JPEMHn+4hl6eTqzPkFbptYHaMnRjLn1GW7muKKyPkMzR5KdOq4AMSxlKaSwxKXQ2axDyZ06ud4liWYdSnbq5IaNPVYqUphjJSSF7WYdSO7Uy+7+mDXrQLJTC6SwwkpRChOsRKWIj5WuFJEHfl9y0V85FyZes/YlO+UuRTSsDKSIg5WHFBE2a09yp173KknYZu1JdqqfFEGxMpMiHFZ+UgTCylKKEAO/K7nob3y0wnOzdiU75UUKv1h5S+ERK3spfG3WjuROvfX928vD6+1Idsq7FMOxxiPFQKxRSTEEa2xS9B74bclFfxf4Dac+L78t2anQUvTAGq0Uq2KNWYqVNmtLcqfeR/wwz/VSW5KdiimFI1aROs/yCxapyyy5ZpGqZ9HAb0ou+ge77991XnlTslOGUnRhFanWtFy/SHWluVkbkjv1UUCKRrM2JDslIkUdq0gtzcVZipRLKoqUc6brkov+SU8K88dRWqMptT7Tw5KVQq1ZylLAVGewPktKPaltusoBZaXqkThjElIoYKUihTlWQlLYDvwXSanH3XfpZueVlVoQmyOnKIUJVqJSwHQ+CX+QWr7GvZxjHs1xcYj6U5aVckw8rNSliIaVgRRx7rO+SUo9nK/8rmfwZslK9UhYrJykCIqVmRThsPKTItDAf5eUerD6ojfiv1myUsPjGStjKfxi5S2Fx836ISl1f/BO1eOnWbJSfuMBayRSDMcajxQDsUYlxZCB/ykpdc/rojfSs1myUkHTB2ucUvTAGq0Uq27WL0mpuyF3qp4VmiUrFS2uWEUKR6widZ7lWEXqMksG/rek1J1Yi97IombJSlmlE6tI3Uw7VpFqTctm/ZGUum20U/U0myUrpZBrWEVqca6witTSXGAVKZdM53AqKXVLYNEbqWSlBKP4NWtNqdOJHpasFDr/OfM8U72dAs7+L5VQs4Qeqq3lrLbpKlj6UohgJSGFAlYqUpgP/Jrkov/tuPe0bNaaoFO3FIZYyUlhhZWiFCabVUnu1Ezt4UygEnRykyIyVtJSxMRKXYpoWBlIEWfgJ5KL3uPPDgRv1kTQqZcUobFykiIoVmZSBNwsyZ1i2KczYZql6DRUiiBYmUrhHytfKeAfdPYd7TpexlgAAAAASUVORK5CYII=);
-    }
-
-    .footer {
-      min-height: 60px;
-      background-repeat: repeat-x;
-      background-position: bottom left;
-      background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAAA8CAIAAAAfXYiZAAAB+ElEQVR4nO3b11aDQBSF4T2IXWM3lhfxTt//PWKvsTfwIllLEobQZuZsYM4DyFkffyKBRJ2encBPsQmlF9BNHEtvoBul+LBiAEp6idQogK0sRdlUrMYnjwhLUTYVJzZiwQoom4rUxMmjwAoom4pSG8ljzTEmhV/duQucrzExDZKCbFkhpdRP9vuBWFmNk4JUWfOUUt95/2MEymqoFNyXtUAp9VXsusVpWY2WgsuyFimlPstcCzsqqwVScIPVDik4eBkuUUp9VPokaresNknBalnLlFLvNe5u2CqrfVKwVNYKpdRb7Ttm5stqqxSMl7VKKfVq6C6sybLaLQWDZa1RSr0YvbNvpqwuSMFIWeuUUs8WnhbVLas7UqhZVo9SamjtCWR1rF5kcA1jM7T5Ybfi3+6gFKqVtUEp9WT/1lzpI3RWCmXL2qSUenT11KXEcTouheJlbVFKPbh9RlzoaF5qNPllbVNK3Ut8oyXnmF4qObPK2qGUupP7/l3mkb1UevRl7VJK3Qp/p1NXlpfKmumy9iilbgikMFWWl5o9/4t4qdwZvwz3KaWumaQwKstLFZywTyl1xScF8Z+jaIdTqh8hZPsx1iWl1EEEsJXFLAUwlXVBKXWYeE9nWZBfCiRlnVNKHaWuE+TXbIoUxMsaUEodZ1x7Si7bLCkAf1M7eHbSdYGuAAAAAElFTkSuQmCC);
-    }
-
-    .container {
-      border-style: solid;
-      border-width: 1px;
-      border-radius: 10px;
-      -moz-border-radius: 10px;
-      -webkit-border-radius: 10px;
-      overflow: hidden;
-      /* otherwise the background image appears on top of the curved border */
-    }
-
-
-    /* layout */
-    body {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 3rem;
+      font-weight: 700;
       text-align: center;
-    }
-
-    .container {
-      width: 760px;
-      margin: 40px auto;
-      text-align: left;
-      max-width: calc(100% - 10px);
-    }
-
-    h2,
-    h3,
-    h4,
-    h5,
-    h6 {
-      margin-bottom: 0;
-    }
-
-    ul {
-      line-height: 150%;
-    }
-
-    ul,
-    p {
-      margin-top: 5px;
-      margin-bottom: 0;
-    }
-
-    .main,
-    .footer {
-      padding: 1px 10px 0 10px;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, #e0f2fe 0%, #38bdf8 50%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 24px;
+      text-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
     }
 
     #error {
       display: none;
-      padding: 5px 10px;
-      margin: 30px 10px;
+      padding: 12px 20px;
+      margin-bottom: 24px;
+      border-radius: 12px;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      font-size: 0.95rem;
+      text-align: center;
     }
 
-    form ul {
-      list-style-type: none;
-      padding-left: 25px;
-    }
-
-    input[type=text] {
-      width: 640px;
-      max-width: calc(100% - 8em)
-    }
-
-    .footer {
+    .search-form {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 32px;
       position: relative;
-      clear: both;
     }
 
-    .footer p {
-      margin: 0;
-      position: absolute;
-      bottom: 10px;
-      right: 10px;
-      padding-left: 10px;
+    .input-wrapper {
+      flex: 1;
+      position: relative;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 16px 20px;
+      font-size: 1.05rem;
+      font-family: inherit;
+      color: #f8fafc;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 14px;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    input[type="text"]:focus {
+      border-color: #38bdf8;
+      background: rgba(30, 41, 59, 0.9);
+      box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15), 0 0 15px rgba(56, 189, 248, 0.2);
+    }
+
+    input[type="text"]::placeholder {
+      color: #94a3b8;
+    }
+
+    input[type="submit"] {
+      padding: 16px 32px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      font-family: inherit;
+      color: #0f172a;
+      background: linear-gradient(135deg, #38bdf8 0%, #60a5fa 100%);
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+    }
+
+    input[type="submit"]:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(56, 189, 248, 0.45);
+      background: linear-gradient(135deg, #7dd3fc 0%, #93c5fd 100%);
+    }
+
+    input[type="submit"]:active {
+      transform: translateY(0);
     }
 
     #google-ad {
       text-align: center;
-      margin: 10px auto;
+      margin: 20px 0;
+      border-radius: 12px;
+      overflow: hidden;
     }
 
-    @media(min-width: 768px) {
-      #google-ad {
-        margin: 0;
-        float: right;
-        margin: 4px 2px 2px 20px;
+    .info-section {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(148, 163, 184, 0.15);
+    }
+
+    .info-section h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.3rem;
+      color: #e0f2fe;
+      margin-bottom: 12px;
+    }
+
+    .info-section p {
+      color: #94a3b8;
+      line-height: 1.6;
+      margin-bottom: 12px;
+      font-size: 0.98rem;
+    }
+
+    .info-section a {
+      color: #38bdf8;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .info-section a:hover {
+      color: #7dd3fc;
+      text-decoration: underline;
+    }
+
+    .footer {
+      margin-top: 32px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #64748b;
+    }
+
+    .footer a {
+      color: #38bdf8;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 640px) {
+      .container {
+        padding: 24px;
+      }
+
+      h1 {
+        font-size: 2.2rem;
+      }
+
+      .search-form {
+        flex-direction: column;
+      }
+
+      input[type="submit"] {
+        width: 100%;
       }
     }
   </style>
@@ -163,61 +221,56 @@
 
   <div class="container">
 
-    <div class="main">
+    <h1>Heavenly</h1>
 
-      <h1>Node Unblocker</h1>
+    <div id="error"></div>
 
-      <div id="error"></div>
-
-      <form action="no-js" method="get" id="unblocker-form">
-        <p>
-          URL or Search:
-          <input type="text" id="url" name="url" autofocus="autofocus" />
-          <input type="submit" value="Go" />
-        </p>
-
-      </form>
-
-      <div id="google-ad">
-        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-        <!-- Nodeunblocker.com -->
-        <ins class="adsbygoogle" style="display:inline-block;width:336px;height:280px"
-          data-ad-client="ca-pub-9477050254721722" data-ad-slot="3464697570"></ins>
-        <script>
-          (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
+    <form action="no-js" method="get" id="unblocker-form" class="search-form">
+      <div class="input-wrapper">
+        <input type="text" id="url" name="url" placeholder="Enter a URL or search query..." autofocus="autofocus" />
       </div>
+      <input type="submit" value="Go" />
+    </form>
 
-      <h3>About Node Unblocker</h3>
-      <p>Node Unblocker is a web proxy, similar to CGIProxy, PHProxy, or Glype, that allows users to evade filters and
-        censorship and access blocked websites. </p>
-      <p>It's designed to be extremely fast and compatible: It processes the data on-the-fly rather than buffering the
-        entire response, and it only modifies URLs when necessary - relative ones will "just work". </p>
-      <p>Now compatible with Youtube (it replaces youtube.com video pages with a custom page that just streams the video)!</p>
-      <p>Node Unblocker is written in JavaScript with <a href="http://nodejs.org">node.js</a>. The source code is <a
-          href="https://github.com/nfriedly/node-unblocker">available on github</a>.</p>
+    <div id="google-ad">
+      <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+      <!-- Nodeunblocker.com -->
+      <ins class="adsbygoogle" style="display:inline-block;width:336px;height:280px"
+        data-ad-client="ca-pub-9477050254721722" data-ad-slot="3464697570"></ins>
+      <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+    </div>
+
+    <div class="info-section">
+      <h3>About Heavenly</h3>
+      <p>Heavenly is a fast, streamlined web proxy designed to deliver smooth web navigation and seamless streaming.</p>
+      <p>It processes response data on-the-fly without heavy buffering, keeping URLs functional and performance high.</p>
+      <p>Source code is open source and available under AGPL-3.0.</p>
     </div>
 
     <div class="footer">
-      <p><a href="https://github.com/nfriedly/node-unblocker">Node Unblocker</a> by <a href="http://www.nfriedly.com/"
-          title="Node.js developer and JavaScript Expert">Nathan Friedly</a></p>
+      <p>Originally created by <a href="http://www.nfriedly.com/" target="_blank" rel="noopener">Nathan Friedly</a> &bull; Improved by <strong>Syshi</strong></p>
     </div>
 
   </div>
+
   <script>
     function $(id) {
       return document.getElementById(id);
     }
 
     $('unblocker-form').onsubmit = function () {
-      var url = $('url').value;
-      if (url.substr(0, 4) != "http") {
+      var url = $('url').value.trim();
+      if (!url) return false;
+
+      if (url.substr(0, 4) !== "http") {
         // url heuristic: if it has at least one dot and doesn't have any spaces, assume it's a url that just omitted the protocol
         if (url.includes('.') && !url.includes(' ')) {
           url = "https://" + url;
-        } else
-        
-        url = "https://google.com/search?q=" + encodeURIComponent(url);
+        } else {
+          url = "https://google.com/search?q=" + encodeURIComponent(url);
+        }
       }
       window.location = location.protocol + '//' + location.host + '/proxy/' + url;
       return false;
@@ -242,7 +295,6 @@
       checkError();
     }
   </script>
-
 
 </body>
 
