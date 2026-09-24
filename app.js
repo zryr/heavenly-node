@@ -63,6 +63,11 @@ var unblockerConfig = {
     ]
 };
 
+// Serve our updated unblocker-client script before unblocker handles it
+app.get('/proxy/client/unblocker-client.js', function(req, res) {
+    res.sendFile(__dirname + '/custom-client/unblocker-client.js');
+});
+
 var unblocker = new Unblocker(unblockerConfig);
 
 // this line must appear before any express.static calls (or anything else that sends responses)
