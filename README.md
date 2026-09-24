@@ -1,49 +1,96 @@
-# nodeunblocker.com
+<div align="center">
 
-Evade internet censorship!
+# ✨ Heavenly Node ✨
 
-The original nodeunblocker.com is gone, but it's now easier than ever to deploy your own copy.
+*A sleek, high-performance web proxy & streaming service.*
 
-[![Deploy to Bluemix](https://cloud.ibm.com/devops/setup/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/nfriedly/nodeunblocker.com)
-[![Deploy to AWS](https://oneclick.amplifyapp.com/button.svg)](https://console.aws.amazon.com/amplify/home#/deploy?repo=https://github.com/nfriedly/nodeunblocker.com)
-[![Deploy to Cyclic](https://deploy.cyclic.sh/button.svg)](https://deploy.cyclic.sh/)
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fnfriedly%2Fnodeunblocker.com)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0.html)
+[![Node.js Version](https://img.shields.io/badge/Node.js-%3E%3D18-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Status](https://img.shields.io/badge/Status-Active-brightgreen.svg)]()
+[![Improved By](https://img.shields.io/badge/Improved%20By-Syshi-7c3aed?style=flat&logo=github)](https://github.com/)
 
-## Now with YouTube support (sort of)
+---
 
-⚠️ YouTube appears to no be detecting and blocking this proxy, so you can not currently watch youtube videos through it. ⚠️
+</div>
 
-I went ahead and activated the [youtube example](https://github.com/nfriedly/node-unblocker/blob/master/examples/youtube/youtube.js), it replaces youtube.com video pages with a custom page that just streams the video (~~but actually works~~). 
+## 🌌 Overview
 
-To disable it just add `//` to the beginning of [this line of code in app.js](https://github.com/nfriedly/nodeunblocker.com/blob/29342cd97fc687f115c65e3e17c9be755b5beaf9/app.js#L59) like so:
+**Heavenly Node** is a fast, lightweight, and modern web application proxy service designed for seamless web browsing and dynamic content streaming. Built on top of Node.js and Express, Heavenly Node processes web requests on-the-fly with minimal latency and high fidelity.
 
-```js
-//        youtube.processRequest
-```
+---
 
-## Running the website on your computer
+## ⚡ Features & Highlights
 
-1. Install [node.js](http://nodejs.org/)
-2. [Download the code](https://github.com/nfriedly/nodeunblocker.com/archive/master.zip)
-3. Unzip it
-4. Open up a terminal/command line
-5. `cd` into the directory
-6. Run `npm install` to grab the dependencies.
-7. Run `npm start` to start the server. It should spawn a new instance for each CPU core you have.
+- 🚀 **On-The-Fly Processing:** Streams and modifies data on the fly without buffering entire responses.
+- ✨ **Ethereal Blue Design:** Modern glassmorphism UI with smooth ambient glow and responsive layouts.
+- 🔗 **Smart URL Rewriting:** Automatically handles relative URLs and search queries seamlessly.
+- 📺 **Media Compatible:** Supports streaming media content directly through proxy middleware.
+- 🛠️ **Easy Deployment:** Deploy to Vercel, AWS, Cyclic, or your own server in minutes.
 
-(Note: running `node app.js` will start up a single worker, whereas `npm start` will start up multiple workers and a watchdog process via the [Gatling](https://npmjs.org/package/gatling)
-package.)
+---
 
-After that, it will be live on your computer and accessible from your computer at http://localhost:8080/ - accessing it from another computer is beyond the scope of this guide, but it is possible.
+## 🚀 One-Click Deployment
 
-## Running the website on Bluemix/Azure/AWS/etc
+Deploy your own instance of **Heavenly Node** with a single click:
 
-This project should be runnable without modification on many cloud providers. Clone/download the code and deploy it, or just click one of the buttons above. (I used to use heroku, but they have since changed their policies to not allow it.)
+| Provider | Deploy Link |
+| :--- | :--- |
+| **Vercel** | [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fnfriedly%2Fnodeunblocker.com) |
+| **AWS Amplify** | [![Deploy to AWS](https://oneclick.amplifyapp.com/button.svg)](https://console.aws.amazon.com/amplify/home#/deploy?repo=https://github.com/nfriedly/nodeunblocker.com) |
+| **Cyclic** | [![Deploy to Cyclic](https://deploy.cyclic.sh/button.svg)](https://deploy.cyclic.sh/) |
 
-# About the project
+---
 
-The the core of the nodeunblocker.com has been extracted into a [standalone library](https://github.com/nfriedly/node-unblocker) to make it more flexible, but everything you need to run the website is right here.
+## 💻 Local Quick Start
 
-This project is released under the terms of the [GNU Affero General Public License version 3](https://www.gnu.org/licenses/agpl-3.0.html).
+Get **Heavenly Node** running on your local machine in seconds:
 
-All source code is copyright [Nathan Friedly](http://nfriedly.com/).
+### Prerequisites
+
+- 🟢 [Node.js](https://nodejs.org/) (v16 or higher recommended)
+- 📦 [npm](https://www.npmjs.com/)
+
+### Installation Steps
+
+1. **Clone or Download the Repository:**
+   ```bash
+   git clone https://github.com/nfriedly/nodeunblocker.com.git
+   cd nodeunblocker.com
+   ```
+
+2. **Install Dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Start the Server:**
+   ```bash
+   npm start
+   ```
+
+4. **Access the Application:**
+   Open your browser and navigate to `http://localhost:8080/` ✨
+
+---
+
+## 🛠️ Technology Stack
+
+- **Server Framework:** [Express.js](https://expressjs.com/)
+- **Core Proxy Engine:** `unblocker` package
+- **Multi-Process Management:** `gatling`
+- **Frontend UI:** Vanilla HTML5, CSS3 Glassmorphism, Space Grotesk & Outfit typography
+
+---
+
+## 📜 License & Credits
+
+This project is open-source and released under the terms of the **[GNU Affero General Public License v3.0](https://www.gnu.org/licenses/agpl-3.0.html)**.
+
+- **Original Project:** Created by [Nathan Friedly](http://nfriedly.com/).
+- **Improvements & Heavenly Rebrand:** Enhanced and maintained by **Syshi**.
+
+---
+
+<div align="center">
+  <sub>Made with 💙 by Syshi &bull; Powered by Heavenly Node</sub>
+</div>
