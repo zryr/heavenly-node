@@ -701,6 +701,27 @@
               <p class="hero-card-desc">Includes a Home button in the floating widget to quickly return to Heavenly.</p>
             </div>
 
+            <!-- Hero Card: Collapsible Widget Dock Bar -->
+            <div class="hero-card">
+              <div class="hero-card-header">
+                <span class="hero-card-title">Enable Collapsible Widget Dock Bar</span>
+                <label class="switch-toggle">
+                  <input type="checkbox" id="set-use-widget-dock">
+                  <span class="slider-knob"></span>
+                </label>
+              </div>
+              <p class="hero-card-desc">Docks all active widgets inside a collapsible bar on the screen edge with a blue arrow pull tab.</p>
+              <div style="display: flex; gap: 10px; align-items: center; margin-top: 6px;">
+                <label style="font-size: 0.85rem; color: #cbd5e1;">Dock Position:</label>
+                <select id="set-dock-position" style="flex: 1; padding: 6px 10px; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 10px; color: #f8fafc; font-family: inherit; font-size: 0.88rem; outline: none; cursor: pointer;">
+                  <option value="bottom">Bottom Edge (Default)</option>
+                  <option value="top">Top Edge</option>
+                  <option value="left">Left Edge</option>
+                  <option value="right">Right Edge</option>
+                </select>
+              </div>
+            </div>
+
             <!-- Hero Card: Reset Widget Positions -->
             <div class="hero-card" style="align-items: center; text-align: center; background: rgba(56, 189, 248, 0.08); border-color: rgba(56, 189, 248, 0.3);">
               <span class="hero-card-title" style="color: #38bdf8;">Widget Screen Position Reset</span>
@@ -777,7 +798,9 @@
         showScrollLock: saved.showScrollLock !== undefined ? saved.showScrollLock : true,
         showMagnifier: saved.showMagnifier !== undefined ? saved.showMagnifier : true,
         showNavSearch: saved.showNavSearch !== undefined ? saved.showNavSearch : true,
-        showNavHome: saved.showNavHome !== undefined ? saved.showNavHome : true
+        showNavHome: saved.showNavHome !== undefined ? saved.showNavHome : true,
+        useWidgetDock: saved.useWidgetDock || false,
+        dockPosition: saved.dockPosition || 'bottom'
       };
     }
 
@@ -799,6 +822,8 @@
       $('set-show-magnifier').checked = settings.showMagnifier;
       $('set-show-nav-search').checked = settings.showNavSearch;
       $('set-show-nav-home').checked = settings.showNavHome;
+      $('set-use-widget-dock').checked = settings.useWidgetDock;
+      $('set-dock-position').value = settings.dockPosition;
 
       // Populate preset dropdown
       var select = $('preset-select');
@@ -888,12 +913,14 @@
         settings.showMagnifier = $('set-show-magnifier').checked;
         settings.showNavSearch = $('set-show-nav-search').checked;
         settings.showNavHome = $('set-show-nav-home').checked;
+        settings.useWidgetDock = $('set-use-widget-dock').checked;
+        settings.dockPosition = $('set-dock-position').value;
         settings.selectedPreset = $('preset-select').value;
         saveSettings(settings);
         syncLandingCloak();
       };
 
-      ['set-auto-cloak', 'set-persistent-cloak', 'set-panic-key-enable', 'set-touch-panic', 'set-show-scroll-lock', 'set-show-magnifier', 'set-show-nav-search', 'set-show-nav-home', 'preset-select'].forEach(function (id) {
+      ['set-auto-cloak', 'set-persistent-cloak', 'set-panic-key-enable', 'set-touch-panic', 'set-show-scroll-lock', 'set-show-magnifier', 'set-show-nav-search', 'set-show-nav-home', 'set-use-widget-dock', 'set-dock-position', 'preset-select'].forEach(function (id) {
         $(id).onchange = updateHandler;
       });
 
