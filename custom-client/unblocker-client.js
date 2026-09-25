@@ -245,6 +245,928 @@
     };
   }
 
+  function initHeavenlyCloakAndPanic(window) {
+    try {
+      if (window !== window.top) return;
+
+      var DEFAULT_PRESETS = {
+        classroom: { title: "Classes", icon: "https://ssl.gstatic.com/classroom/favicon.png" },
+        drive: { title: "My Drive - Google Drive", icon: "https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" },
+        canvas: { title: "Dashboard", icon: "https://du1ux2871uqvu.cloudfront.net/dist/images/favicon-e10d657a73.ico" },
+        khan: { title: "Dashboard | Khan Academy", icon: "https://www.khanacademy.org/favicon.ico" }
+      };
+
+      function loadSettings() {
+        var saved = {};
+        try {
+          saved = JSON.parse(localStorage.getItem('heavenly_settings') || '{}');
+        } catch (e) {}
+
+        return {
+          autoCloak: saved.autoCloak !== undefined ? saved.autoCloak : true,
+          persistentCloak: saved.persistentCloak || false,
+          selectedPreset: saved.selectedPreset || 'classroom',
+          customPresets: saved.customPresets || {},
+          panicKeyEnable: saved.panicKeyEnable || false,
+          panicKey: saved.panicKey || '`',
+          touchPanic: saved.touchPanic || false,
+          panicUrl: saved.panicUrl || 'https://classroom.google.com',
+          showScrollLock: saved.showScrollLock !== undefined ? saved.showScrollLock : true,
+          showMagnifier: saved.showMagnifier !== undefined ? saved.showMagnifier : true,
+          showNavSearch: saved.showNavSearch !== undefined ? saved.showNavSearch : true,
+          showNavHome: saved.showNavHome !== undefined ? saved.showNavHome : true
+        };
+      }
+
+      var settings = loadSettings();
+      var originalTitle = window.document.title;
+      var originalFavicon = null;
+
+      var favEl = window.document.querySelector("link[rel*='icon']");
+      if (favEl) originalFavicon = favEl.href;
+
+      function getPresetData() {
+        var allPresets = Object.assign({}, DEFAULT_PRESETS, settings.customPresets);
+        return allPresets[settings.selectedPreset] || DEFAULT_PRESETS.classroom;
+      }
+
+      function applyCloak(isCloaked) {
+        if (!window.document) return;
+        var preset = getPresetData();
+        if (isCloaked) {
+          if (!originalTitle) originalTitle = window.document.title;
+          window.document.title = preset.title;
+
+          var link = window.document.querySelector("link[rel*='icon']") || window.document.createElement('link');
+          link.type = 'image/x-icon';
+          link.rel = 'shortcut icon';
+          link.href = preset.icon;
+          window.document.getElementsByTagName('head')[0].appendChild(link);
+        } else {
+          if (originalTitle) window.document.title = originalTitle;
+          if (originalFavicon) {
+            var link2 = window.document.querySelector("link[rel*='icon']");
+            if (link2) link2.href = originalFavicon;
+          }
+        }
+      }
+
+      // 1. Persistent Cloak
+      if (settings.persistentCloak) {
+        applyCloak(true);
+      } else if (settings.autoCloak) {
+        // 2. Auto Tab Cloak on tab blur/switch
+        window.addEventListener('visibilitychange', function () {
+          if (window.document.hidden) {
+            applyCloak(true);
+          } else {
+            applyCloak(false);
+          }
+        });
+      }
+
+      // 3. Panic Key Shortcut
+      if (settings.panicKeyEnable && settings.panicKey) {
+        window.addEventListener('keydown', function (e) {
+          if (e.key === settings.panicKey || e.code === settings.panicKey) {
+            window.location.href = settings.panicUrl || 'https://classroom.google.com';
+          }
+        }, true);
+      }
+
+      // 4. Touch Panic Overlay Button
+      if (settings.touchPanic) {
+        function injectPanicOverlay() {
+          if (!window.document || !window.document.body) return;
+          if (window.document.getElementById('heavenly-touch-panic-root')) return;
+
+          var pContainer = window.document.createElement('div');
+          pContainer.id = 'heavenly-touch-panic-root';
+          pContainer.style.cssText = 'position:fixed;bottom:20px;left:20px;z-index:2147483647;user-select:none;-webkit-user-select:none;font-family:"Outfit",sans-serif;';
+
+          // Restore position from localStorage
+          try {
+            var savedPanicPos = localStorage.getItem('heavenly_panic_pos');
+            if (savedPanicPos) {
+              var pos = JSON.parse(savedPanicPos);
+              if (typeof pos.left === 'number' && typeof pos.top === 'number') {
+                pContainer.style.bottom = 'auto';
+                pContainer.style.left = pos.left + 'px';
+                pContainer.style.top = pos.top + 'px';
+              }
+            }
+          } catch (e) {}
+
+          var pShadow = pContainer.attachShadow ? pContainer.attachShadow({ mode: 'open' }) : pContainer;
+
+          var pStyle = window.document.createElement('style');
+          pStyle.textContent = [
+            '.panic-wrapper { position: relative; display: inline-flex; align-items: center; justify-content: center; }',
+            '.panic-btn {',
+            '  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);',
+            '  color: #ffffff; border: none; border-radius: 20px; font-weight: 700; font-size: 13px;',
+            '  cursor: pointer; box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); padding: 10px 16px;',
+            '  display: flex; align-items: center; gap: 6px; white-space: nowrap;',
+            '  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); outline: none;',
+            '}',
+            '.panic-btn.minimized {',
+            '  width: 42px; height: 42px; padding: 0; border-radius: 50%; justify-content: center;',
+            '  opacity: 0.85; font-size: 18px;',
+            '}',
+            '.panic-btn.dragging { cursor: grabbing; box-shadow: 0 0 25px rgba(239, 68, 68, 0.9); }',
+            '.progress-svg { position: absolute; inset: -4px; width: calc(100% + 8px); height: calc(100% + 8px); pointer-events: none; opacity: 0; transition: opacity 0.2s; }',
+            '.progress-svg.active { opacity: 1; }',
+            '.progress-circle { fill: none; stroke: #38bdf8; stroke-width: 3; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; }'
+          ].join('\n');
+
+          var wrapper = window.document.createElement('div');
+          wrapper.className = 'panic-wrapper';
+          wrapper.innerHTML = [
+            '<svg class="progress-svg" id="prog-svg" viewBox="0 0 50 50">',
+            '  <circle class="progress-circle" id="prog-circle" cx="25" cy="25" r="22" stroke-dasharray="138" stroke-dashoffset="138"></circle>',
+            '</svg>',
+            '<button type="button" class="panic-btn" id="p-btn">',
+            '  <span>🚨</span><span class="btn-label">PANIC</span>',
+            '</button>'
+          ].join('\n');
+
+          pShadow.appendChild(pStyle);
+          pShadow.appendChild(wrapper);
+          window.document.body.appendChild(pContainer);
+
+          var btn = pShadow.querySelector('#p-btn');
+          var progSvg = pShadow.querySelector('#prog-svg');
+          var progCircle = pShadow.querySelector('#prog-circle');
+
+          var isMinimized = false;
+          var autoMinTimer = setTimeout(function () {
+            isMinimized = true;
+            btn.classList.add('minimized');
+            btn.querySelector('.btn-label').style.display = 'none';
+          }, 10000);
+
+          // Long-press drag variables
+          var holdTimer = null;
+          var holdAnimFrame = null;
+          var startTime = 0;
+          var HOLD_DURATION = 1500; // 1.5 seconds
+          var canDrag = false;
+          var isDragging = false;
+          var startX = 0, startY = 0;
+          var startLeft = 0, startTop = 0;
+
+          function triggerPanic() {
+            window.location.href = settings.panicUrl || 'https://classroom.google.com';
+          }
+
+          function cancelHold() {
+            if (holdTimer) clearTimeout(holdTimer);
+            if (holdAnimFrame) cancelAnimationFrame(holdAnimFrame);
+            holdTimer = null;
+            holdAnimFrame = null;
+            progSvg.classList.remove('active');
+            progCircle.style.strokeDashoffset = '138';
+          }
+
+          function updateProgress() {
+            var elapsed = Date.now() - startTime;
+            var progress = Math.min(1, elapsed / HOLD_DURATION);
+            var offset = 138 * (1 - progress);
+            progCircle.style.strokeDashoffset = offset.toString();
+
+            if (progress < 1) {
+              holdAnimFrame = requestAnimationFrame(updateProgress);
+            } else {
+              canDrag = true;
+              btn.classList.add('dragging');
+              progSvg.classList.remove('active');
+            }
+          }
+
+          var onDown = function (e) {
+            canDrag = false;
+            isDragging = false;
+            startX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+            startY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+
+            var rect = pContainer.getBoundingClientRect();
+            startLeft = rect.left;
+            startTop = rect.top;
+
+            startTime = Date.now();
+            progSvg.classList.add('active');
+            updateProgress();
+
+            window.addEventListener('mousemove', onMove, true);
+            window.addEventListener('mouseup', onUp, true);
+            window.addEventListener('touchmove', onMove, true);
+            window.addEventListener('touchend', onUp, true);
+          };
+
+          var onMove = function (e) {
+            var currentX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+            var currentY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+            var dx = currentX - startX;
+            var dy = currentY - startY;
+
+            if (!canDrag) {
+              if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+                cancelHold();
+              }
+              return;
+            }
+
+            isDragging = true;
+            pContainer.style.bottom = 'auto';
+            pContainer.style.right = 'auto';
+
+            var newLeft = startLeft + dx;
+            var newTop = startTop + dy;
+
+            var maxLeft = (window.innerWidth || 800) - pContainer.offsetWidth;
+            var maxTop = (window.innerHeight || 600) - pContainer.offsetHeight;
+
+            pContainer.style.left = Math.max(0, Math.min(newLeft, maxLeft)) + 'px';
+            pContainer.style.top = Math.max(0, Math.min(newTop, maxTop)) + 'px';
+          };
+
+          var onUp = function () {
+            cancelHold();
+            window.removeEventListener('mousemove', onMove, true);
+            window.removeEventListener('mouseup', onUp, true);
+            window.removeEventListener('touchmove', onMove, true);
+            window.removeEventListener('touchend', onUp, true);
+
+            if (canDrag && isDragging) {
+              btn.classList.remove('dragging');
+              try {
+                var rect = pContainer.getBoundingClientRect();
+                localStorage.setItem('heavenly_panic_pos', JSON.stringify({ left: rect.left, top: rect.top }));
+              } catch (e) {}
+            } else if (!isDragging) {
+              // Tap/click triggers panic directly regardless of minimized circle state
+              triggerPanic();
+            }
+          };
+
+          btn.addEventListener('mousedown', onDown);
+          btn.addEventListener('touchstart', onDown);
+        }
+
+        if (window.document && (window.document.readyState === 'interactive' || window.document.readyState === 'complete')) {
+          injectPanicOverlay();
+        } else if (window.document) {
+          window.document.addEventListener('DOMContentLoaded', injectPanicOverlay);
+        }
+      }
+
+    } catch (e) {
+      console.error('Error initializing Heavenly Cloak & Panic:', e);
+    }
+  }
+
+  function initHeavenlyWidgets(window) {
+    try {
+      if (window !== window.top) return; // Only show in main top window
+      if (window.document && window.document.getElementById('heavenly-scroll-lock-root')) return;
+
+      var settings = {};
+      try {
+        settings = JSON.parse(localStorage.getItem('heavenly_settings') || '{}');
+      } catch (e) {}
+
+      var showScrollLock = settings.showScrollLock !== undefined ? settings.showScrollLock : true;
+      var showMagnifier = settings.showMagnifier !== undefined ? settings.showMagnifier : true;
+      var showNavSearch = settings.showNavSearch !== undefined ? settings.showNavSearch : true;
+      var showNavHome = settings.showNavHome !== undefined ? settings.showNavHome : true;
+
+      var scrollLockEnabled = false;
+
+      // Intercept keydown during capture phase to prevent browser scrolling when lock is ON
+      window.addEventListener('keydown', function (e) {
+        if (!scrollLockEnabled) return;
+        var target = e.target;
+        var isInput = false;
+        if (target) {
+          var tagName = target.tagName ? target.tagName.toLowerCase() : '';
+          if (tagName === 'input' || tagName === 'textarea' || target.isContentEditable) {
+            isInput = true;
+          }
+        }
+        if (isInput) return;
+
+        var scrollKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Home', 'End', ' ', 'Spacebar'];
+        var scrollKeyCodes = [32, 33, 34, 35, 36, 37, 38, 39, 40];
+        if (scrollKeys.indexOf(e.key) !== -1 || scrollKeyCodes.indexOf(e.keyCode) !== -1) {
+          e.preventDefault();
+        }
+      }, true);
+
+      // Shared Stylesheet for Heavenly Widgets
+      var widgetCss = [
+        '.heavenly-widget {',
+        '  background: rgba(15, 23, 42, 0.88);',
+        '  backdrop-filter: blur(12px);',
+        '  -webkit-backdrop-filter: blur(12px);',
+        '  border: 1px solid rgba(56, 189, 248, 0.3);',
+        '  border-radius: 14px;',
+        '  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), 0 0 15px rgba(56, 189, 248, 0.2);',
+        '  padding: 8px 12px;',
+        '  display: flex;',
+        '  align-items: center;',
+        '  gap: 8px;',
+        '  color: #f8fafc;',
+        '  font-size: 13px;',
+        '  font-weight: 500;',
+        '  cursor: grab;',
+        '  box-sizing: border-box;',
+        '  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);',
+        '  opacity: 1;',
+        '  overflow: hidden;',
+        '}',
+        '.heavenly-widget:active { cursor: grabbing; }',
+        '.heavenly-widget:hover {',
+        '  border-color: rgba(56, 189, 248, 0.6);',
+        '  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), 0 0 20px rgba(56, 189, 248, 0.35);',
+        '}',
+        '/* Auto-minimized circle state */',
+        '.heavenly-widget.minimized {',
+        '  width: 38px !important;',
+        '  height: 38px !important;',
+        '  padding: 0 !important;',
+        '  border-radius: 50% !important;',
+        '  justify-content: center !important;',
+        '  opacity: 0.45 !important;',
+        '  background: rgba(15, 23, 42, 0.75) !important;',
+        '  border-color: rgba(56, 189, 248, 0.4) !important;',
+        '  cursor: pointer !important;',
+        '}',
+        '.heavenly-widget.minimized:hover {',
+        '  opacity: 0.95 !important;',
+        '  transform: scale(1.08);',
+        '  box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);',
+        '}',
+        '.heavenly-widget.minimized .widget-content { display: none !important; }',
+        '.heavenly-widget.minimized .mini-icon { display: flex !important; }',
+        '.mini-icon { display: none; align-items: center; justify-content: center; }',
+        '.widget-content { display: flex; align-items: center; gap: 8px; }',
+        '.drag-handle { display: flex; align-items: center; gap: 6px; white-space: nowrap; color: #e0f2fe; font-weight: 600; }',
+        '.title-icon {',
+        '  width: 16px; height: 16px; fill: none; stroke: #38bdf8; stroke-width: 2;',
+        '  stroke-linecap: round; stroke-linejoin: round;',
+        '  filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.6));',
+        '}',
+        '.btn-toggle, .btn-ctrl {',
+        '  background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(148, 163, 184, 0.3);',
+        '  color: #94a3b8; padding: 5px 9px; border-radius: 8px; font-size: 12px; font-weight: 600;',
+        '  cursor: pointer; outline: none; transition: all 0.2s ease;',
+        '  display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;',
+        '}',
+        '.btn-toggle:hover, .btn-ctrl:hover { background: rgba(51, 65, 85, 0.9); color: #f8fafc; }',
+        '.btn-toggle.active {',
+        '  background: linear-gradient(135deg, #38bdf8 0%, #60a5fa 100%);',
+        '  border: 1px solid transparent; color: #030712; box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);',
+        '}'
+      ].join('\n');
+
+      // Helper to make a container draggable and auto-minimize
+      function attachWidgetBehaviors(container, widgetElement, storageKey, defaultTop, defaultRight) {
+        var isMinimized = false;
+        var inactivityTimer = null;
+
+        // Restore position from localStorage
+        try {
+          var savedPos = localStorage.getItem(storageKey);
+          if (savedPos) {
+            var pos = JSON.parse(savedPos);
+            if (typeof pos.left === 'number' && typeof pos.top === 'number') {
+              var maxLeft = (window.innerWidth || 800) - 50;
+              var maxTop = (window.innerHeight || 600) - 50;
+              container.style.right = 'auto';
+              container.style.bottom = 'auto';
+              container.style.left = Math.max(0, Math.min(pos.left, maxLeft)) + 'px';
+              container.style.top = Math.max(0, Math.min(pos.top, maxTop)) + 'px';
+            }
+          } else {
+            container.style.top = defaultTop + 'px';
+            container.style.right = defaultRight + 'px';
+          }
+        } catch (e) {}
+
+        // Auto-minimize timer (10s)
+        function resetInactivityTimer() {
+          if (inactivityTimer) clearTimeout(inactivityTimer);
+          if (!isMinimized) {
+            inactivityTimer = setTimeout(function () {
+              minimize();
+            }, 10000);
+          }
+        }
+
+        function minimize() {
+          isMinimized = true;
+          widgetElement.classList.add('minimized');
+        }
+
+        function expand() {
+          isMinimized = false;
+          widgetElement.classList.remove('minimized');
+          resetInactivityTimer();
+        }
+
+        // Click on minimized widget expands it
+        widgetElement.addEventListener('click', function (e) {
+          if (isMinimized) {
+            e.stopPropagation();
+            expand();
+          }
+        });
+
+        // Interaction listeners to reset timer
+        ['mouseenter', 'mousemove', 'mousedown', 'touchstart'].forEach(function (evt) {
+          widgetElement.addEventListener(evt, function () {
+            if (!isMinimized) resetInactivityTimer();
+          });
+        });
+
+        // Click-and-drag logic
+        var isDragging = false;
+        var startX = 0, startY = 0;
+        var startLeft = 0, startTop = 0;
+
+        var onMouseDown = function (e) {
+          if (isMinimized) return; // Expand handled by click
+          var target = e.target;
+          if (target && (target.tagName === 'BUTTON' || target.closest('button') || target.tagName === 'INPUT')) {
+            return;
+          }
+          isDragging = true;
+          startX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+          startY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+
+          var rect = container.getBoundingClientRect();
+          startLeft = rect.left;
+          startTop = rect.top;
+
+          container.style.right = 'auto';
+          container.style.bottom = 'auto';
+          container.style.left = startLeft + 'px';
+          container.style.top = startTop + 'px';
+
+          window.addEventListener('mousemove', onMouseMove, true);
+          window.addEventListener('mouseup', onMouseUp, true);
+          window.addEventListener('touchmove', onMouseMove, true);
+          window.addEventListener('touchend', onMouseUp, true);
+        };
+
+        var onMouseMove = function (e) {
+          if (!isDragging) return;
+          var currentX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+          var currentY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+          var dx = currentX - startX;
+          var dy = currentY - startY;
+
+          var newLeft = startLeft + dx;
+          var newTop = startTop + dy;
+
+          var maxLeft = (window.innerWidth || 800) - container.offsetWidth;
+          var maxTop = (window.innerHeight || 600) - container.offsetHeight;
+
+          newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+          newTop = Math.max(0, Math.min(newTop, maxTop));
+
+          container.style.left = newLeft + 'px';
+          container.style.top = newTop + 'px';
+        };
+
+        var onMouseUp = function () {
+          if (isDragging) {
+            isDragging = false;
+            // Save position to localStorage
+            try {
+              var rect = container.getBoundingClientRect();
+              localStorage.setItem(storageKey, JSON.stringify({ left: rect.left, top: rect.top }));
+            } catch (e) {}
+          }
+          window.removeEventListener('mousemove', onMouseMove, true);
+          window.removeEventListener('mouseup', onMouseUp, true);
+          window.removeEventListener('touchmove', onMouseMove, true);
+          window.removeEventListener('touchend', onMouseUp, true);
+        };
+
+        widgetElement.addEventListener('mousedown', onMouseDown);
+        widgetElement.addEventListener('touchstart', onMouseDown);
+
+        resetInactivityTimer();
+        return { minimize: minimize, expand: expand, resetTimer: resetInactivityTimer };
+      }
+
+      function injectUI() {
+        if (!window.document || !window.document.body) return;
+        if (window.document.getElementById('heavenly-scroll-lock-root')) return;
+
+        // --- 1. SCROLL LOCK WIDGET ---
+        if (showScrollLock) {
+          var lockContainer = window.document.createElement('div');
+          lockContainer.id = 'heavenly-scroll-lock-root';
+          lockContainer.style.cssText = 'position:fixed;z-index:2147483646;user-select:none;-webkit-user-select:none;font-family:"Outfit",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;';
+
+          var lockShadow = lockContainer.attachShadow ? lockContainer.attachShadow({ mode: 'open' }) : lockContainer;
+
+          var lockStyle = window.document.createElement('style');
+          lockStyle.textContent = widgetCss;
+
+          var lockWidget = window.document.createElement('div');
+          lockWidget.className = 'heavenly-widget';
+          lockWidget.innerHTML = [
+            '<div class="mini-icon" title="Scroll Lock (Click to expand)">',
+            '  <svg class="title-icon" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0 0 18M3 12h18"></path><circle cx="12" cy="12" r="9"></circle></svg>',
+            '</div>',
+            '<div class="widget-content">',
+            '  <div class="drag-handle" title="Click and drag to move">',
+            '    <svg class="title-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 3a9 9 0 0 0 0 18"></path><path d="M3 12h18"></path></svg>',
+            '    <span>Scroll Lock</span>',
+            '  </div>',
+            '  <button type="button" class="btn-toggle" id="toggle-btn"><span>🔓 OFF</span></button>',
+            '</div>'
+          ].join('\n');
+
+          lockShadow.appendChild(lockStyle);
+          lockShadow.appendChild(lockWidget);
+          window.document.body.appendChild(lockContainer);
+
+          var lockToggleBtn = lockShadow.querySelector('#toggle-btn');
+          lockToggleBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            scrollLockEnabled = !scrollLockEnabled;
+            if (scrollLockEnabled) {
+              lockToggleBtn.classList.add('active');
+              lockToggleBtn.innerHTML = '<span>🔒 ON</span>';
+            } else {
+              lockToggleBtn.classList.remove('active');
+              lockToggleBtn.innerHTML = '<span>🔓 OFF</span>';
+            }
+          });
+
+          attachWidgetBehaviors(lockContainer, lockWidget, 'heavenly_scroll_lock_pos', 20, 20);
+        }
+
+        // --- 2. MAGNIFIER WIDGET & LENS FRAME ---
+        if (showMagnifier) {
+          var magContainer = window.document.createElement('div');
+          magContainer.id = 'heavenly-magnifier-root';
+          magContainer.style.cssText = 'position:fixed;z-index:2147483646;user-select:none;-webkit-user-select:none;font-family:"Outfit",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;';
+
+          var magShadow = magContainer.attachShadow ? magContainer.attachShadow({ mode: 'open' }) : magContainer;
+
+          var magStyle = window.document.createElement('style');
+          magStyle.textContent = widgetCss + [
+            '.lens-frame {',
+            '  position: fixed;',
+            '  border: 2px solid #38bdf8;',
+            '  border-radius: 16px;',
+            '  box-shadow: 0 0 25px rgba(56, 189, 248, 0.4), 0 10px 30px rgba(0, 0, 0, 0.5);',
+            '  background: rgba(15, 23, 42, 0.95);',
+            '  overflow: hidden;',
+            '  z-index: 2147483645;',
+            '  display: flex;',
+            '  flex-direction: column;',
+            '}',
+            '.lens-header {',
+            '  height: 28px;',
+            '  background: rgba(30, 41, 59, 0.95);',
+            '  border-bottom: 1px solid rgba(56, 189, 248, 0.3);',
+            '  display: flex;',
+            '  align-items: center;',
+            '  justify-content: space-between;',
+            '  padding: 0 8px;',
+            '  font-size: 11px;',
+            '  font-weight: 600;',
+            '  color: #e0f2fe;',
+            '  cursor: grab;',
+            '}',
+            '.lens-header:active { cursor: grabbing; }',
+            '.lens-view {',
+            '  flex: 1;',
+            '  position: relative;',
+            '  overflow: hidden;',
+            '  background: #ffffff;',
+            '}',
+            '.lens-mirror {',
+            '  position: absolute;',
+            '  transform-origin: 0 0;',
+            '  pointer-events: none;',
+            '}',
+            '.btn-close-lens {',
+            '  background: none; border: none; color: #94a3b8; font-size: 14px;',
+            '  cursor: pointer; padding: 0 4px; line-height: 1;',
+            '}',
+            '.btn-close-lens:hover { color: #ef4444; }'
+          ].join('\n');
+
+          var magWidget = window.document.createElement('div');
+          magWidget.className = 'heavenly-widget';
+          magWidget.innerHTML = [
+            '<div class="mini-icon" title="Magnifier (Click to expand)">',
+            '  <svg class="title-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
+            '</div>',
+            '<div class="widget-content">',
+            '  <div class="drag-handle" title="Click and drag to move">',
+            '    <svg class="title-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
+            '    <span>Magnifier</span>',
+            '  </div>',
+            '  <button type="button" class="btn-toggle" id="mag-toggle-btn"><span>🔍 OFF</span></button>',
+            '  <button type="button" class="btn-ctrl" id="zoom-out-btn" title="Zoom Out">-</button>',
+            '  <span id="zoom-label" style="font-size:11px;font-weight:700;color:#38bdf8;">2.0x</span>',
+            '  <button type="button" class="btn-ctrl" id="zoom-in-btn" title="Zoom In">+</button>',
+            '  <button type="button" class="btn-ctrl" id="size-btn" title="Lens Size">Size</button>',
+            '</div>'
+          ].join('\n');
+
+          magShadow.appendChild(magStyle);
+          magShadow.appendChild(magWidget);
+          window.document.body.appendChild(magContainer);
+
+          attachWidgetBehaviors(magContainer, magWidget, 'heavenly_magnifier_pos', 70, 20);
+        }
+
+        // --- Magnifier Lens Frame Logic ---
+        var magEnabled = false;
+        var zoomLevel = 2.0;
+        var lensSize = 220; // 160 (S), 220 (M), 300 (L)
+        var lensPos = { left: Math.max(50, Math.floor((window.innerWidth || 800) / 2 - 110)), top: Math.max(50, Math.floor((window.innerHeight || 600) / 2 - 110)) };
+
+        try {
+          var savedLens = localStorage.getItem('heavenly_lens_pos');
+          if (savedLens) {
+            var lp = JSON.parse(savedLens);
+            if (typeof lp.left === 'number') lensPos.left = lp.left;
+            if (typeof lp.top === 'number') lensPos.top = lp.top;
+            if (typeof lp.zoom === 'number') zoomLevel = lp.zoom;
+            if (typeof lp.size === 'number') lensSize = lp.size;
+          }
+        } catch (e) {}
+
+        var lensFrame = null;
+        var mirrorNode = null;
+
+        function updateMirrorPosition() {
+          if (!lensFrame || !mirrorNode) return;
+          var centerX = lensPos.left + lensSize / 2;
+          var centerY = lensPos.top + lensSize / 2 + 14; // header offset
+          var scrollX = window.scrollX || window.pageXOffset || 0;
+          var scrollY = window.scrollY || window.pageYOffset || 0;
+
+          var mirrorLeft = (lensSize / 2) - ((centerX + scrollX) * zoomLevel);
+          var mirrorTop = ((lensSize - 28) / 2) - ((centerY + scrollY) * zoomLevel);
+
+          mirrorNode.style.transform = 'scale(' + zoomLevel + ')';
+          mirrorNode.style.left = mirrorLeft + 'px';
+          mirrorNode.style.top = mirrorTop + 'px';
+        }
+
+        function createLensFrame() {
+          if (lensFrame) return;
+
+          lensFrame = window.document.createElement('div');
+          lensFrame.className = 'lens-frame';
+          lensFrame.style.width = lensSize + 'px';
+          lensFrame.style.height = lensSize + 'px';
+          lensFrame.style.left = lensPos.left + 'px';
+          lensFrame.style.top = lensPos.top + 'px';
+
+          lensFrame.innerHTML = [
+            '<div class="lens-header" id="lens-header">',
+            '  <span>🔍 Lens (' + zoomLevel.toFixed(1) + 'x)</span>',
+            '  <button type="button" class="btn-close-lens" id="close-lens-btn">✕</button>',
+            '</div>',
+            '<div class="lens-view" id="lens-view"></div>'
+          ].join('\n');
+
+          magShadow.appendChild(lensFrame);
+
+          var viewEl = lensFrame.querySelector('#lens-view');
+
+          // Mirror clone of document body
+          var clone = window.document.body.cloneNode(true);
+          // Remove heavenly roots from clone to avoid infinite duplication
+          var roots = clone.querySelectorAll('#heavenly-scroll-lock-root, #heavenly-magnifier-root');
+          roots.forEach(function (r) { r.remove(); });
+
+          mirrorNode = window.document.createElement('div');
+          mirrorNode.className = 'lens-mirror';
+          mirrorNode.style.width = Math.max(window.document.documentElement.scrollWidth, window.innerWidth) + 'px';
+          mirrorNode.style.height = Math.max(window.document.documentElement.scrollHeight, window.innerHeight) + 'px';
+          mirrorNode.appendChild(clone);
+          viewEl.appendChild(mirrorNode);
+
+          updateMirrorPosition();
+
+          // Close button inside header
+          lensFrame.querySelector('#close-lens-btn').addEventListener('click', function (e) {
+            e.stopPropagation();
+            toggleMagnifier(false);
+          });
+
+          // Draggable header for lens frame
+          var headerEl = lensFrame.querySelector('#lens-header');
+          var isDraggingLens = false;
+          var startX = 0, startY = 0;
+          var startLeft = 0, startTop = 0;
+
+          headerEl.addEventListener('mousedown', function (e) {
+            if (e.target.tagName === 'BUTTON') return;
+            isDraggingLens = true;
+            startX = e.clientX || 0;
+            startY = e.clientY || 0;
+            startLeft = lensPos.left;
+            startTop = lensPos.top;
+
+            var onMove = function (me) {
+              if (!isDraggingLens) return;
+              var dx = (me.clientX || 0) - startX;
+              var dy = (me.clientY || 0) - startY;
+              lensPos.left = Math.max(0, Math.min(startLeft + dx, window.innerWidth - lensSize));
+              lensPos.top = Math.max(0, Math.min(startTop + dy, window.innerHeight - lensSize));
+              lensFrame.style.left = lensPos.left + 'px';
+              lensFrame.style.top = lensPos.top + 'px';
+              updateMirrorPosition();
+            };
+
+            var onUp = function () {
+              isDraggingLens = false;
+              window.removeEventListener('mousemove', onMove, true);
+              window.removeEventListener('mouseup', onUp, true);
+              try {
+                localStorage.setItem('heavenly_lens_pos', JSON.stringify({ left: lensPos.left, top: lensPos.top, zoom: zoomLevel, size: lensSize }));
+              } catch (e) {}
+            };
+
+            window.addEventListener('mousemove', onMove, true);
+            window.addEventListener('mouseup', onUp, true);
+          });
+        }
+
+        function destroyLensFrame() {
+          if (lensFrame) {
+            lensFrame.remove();
+            lensFrame = null;
+            mirrorNode = null;
+          }
+        }
+
+        function toggleMagnifier(enable) {
+          magEnabled = enable !== undefined ? enable : !magEnabled;
+          var btn = magShadow.querySelector('#mag-toggle-btn');
+          if (magEnabled) {
+            btn.classList.add('active');
+            btn.innerHTML = '<span>🔍 ON</span>';
+            createLensFrame();
+          } else {
+            btn.classList.remove('active');
+            btn.innerHTML = '<span>🔍 OFF</span>';
+            destroyLensFrame();
+          }
+        }
+
+        magShadow.querySelector('#mag-toggle-btn').addEventListener('click', function (e) {
+          e.stopPropagation();
+          toggleMagnifier();
+        });
+
+        magShadow.querySelector('#zoom-in-btn').addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (zoomLevel < 4.0) {
+            zoomLevel = Math.round((zoomLevel + 0.5) * 10) / 10;
+            magShadow.querySelector('#zoom-label').textContent = zoomLevel.toFixed(1) + 'x';
+            if (lensFrame) {
+              lensFrame.querySelector('#lens-header span').textContent = '🔍 Lens (' + zoomLevel.toFixed(1) + 'x)';
+              updateMirrorPosition();
+            }
+          }
+        });
+
+        magShadow.querySelector('#zoom-out-btn').addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (zoomLevel > 1.5) {
+            zoomLevel = Math.round((zoomLevel - 0.5) * 10) / 10;
+            magShadow.querySelector('#zoom-label').textContent = zoomLevel.toFixed(1) + 'x';
+            if (lensFrame) {
+              lensFrame.querySelector('#lens-header span').textContent = '🔍 Lens (' + zoomLevel.toFixed(1) + 'x)';
+              updateMirrorPosition();
+            }
+          }
+        });
+
+        magShadow.querySelector('#size-btn').addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (lensSize === 160) lensSize = 220;
+          else if (lensSize === 220) lensSize = 300;
+          else lensSize = 160;
+
+          if (lensFrame) {
+            lensFrame.style.width = lensSize + 'px';
+            lensFrame.style.height = lensSize + 'px';
+            updateMirrorPosition();
+          }
+        });
+
+        // Sync mirror on page scroll
+        window.addEventListener('scroll', function () {
+          if (magEnabled) updateMirrorPosition();
+        }, { passive: true });
+      }
+
+      // --- 3. NAVIGATION WIDGET (Search Bar & Home Button) ---
+      if (showNavSearch || showNavHome) {
+        var navContainer = window.document.createElement('div');
+        navContainer.id = 'heavenly-nav-root';
+        navContainer.style.cssText = 'position:fixed;z-index:2147483646;user-select:none;-webkit-user-select:none;font-family:"Outfit",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;';
+
+        var navShadow = navContainer.attachShadow ? navContainer.attachShadow({ mode: 'open' }) : navContainer;
+
+        var navStyle = window.document.createElement('style');
+        navStyle.textContent = widgetCss + [
+          '.nav-input {',
+          '  background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(148, 163, 184, 0.3);',
+          '  color: #f8fafc; padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 500;',
+          '  outline: none; width: 140px; transition: border-color 0.2s, width 0.2s;',
+          '}',
+          '.nav-input:focus { border-color: #38bdf8; width: 180px; background: rgba(15, 23, 42, 0.95); }'
+        ].join('\n');
+
+        var navWidget = window.document.createElement('div');
+        navWidget.className = 'heavenly-widget';
+
+        var navHtml = ['<div class="mini-icon" title="Navigation (Click to expand)"><svg class="title-icon" viewBox="0 0 24 24"><path d="M3 12h18M12 3l9 9-9 9"></path></svg></div>', '<div class="widget-content">'];
+        navHtml.push('<div class="drag-handle" title="Click and drag to move"><svg class="title-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg></div>');
+
+        if (showNavSearch) {
+          navHtml.push('<input type="text" class="nav-input" id="nav-search-input" placeholder="Search or URL..." />');
+          navHtml.push('<button type="button" class="btn-ctrl" id="nav-go-btn">Go</button>');
+        }
+
+        if (showNavHome) {
+          navHtml.push('<button type="button" class="btn-ctrl" id="nav-home-btn" title="Go to Homepage">🏠 Home</button>');
+        }
+
+        navHtml.push('</div>');
+        navWidget.innerHTML = navHtml.join('\n');
+
+        navShadow.appendChild(navStyle);
+        navShadow.appendChild(navWidget);
+        var targetParent = window.document.body || window.document.documentElement;
+        if (targetParent) targetParent.appendChild(navContainer);
+
+        function handleNavigate() {
+          var input = navWidget.querySelector('#nav-search-input') || (navShadow.querySelector ? navShadow.querySelector('#nav-search-input') : null);
+          if (!input) return;
+          var val = input.value.trim();
+          if (!val) return;
+
+          if (val.substr(0, 4) !== "http") {
+            if (val.includes('.') && !val.includes(' ')) {
+              val = "https://" + val;
+            } else {
+              val = "https://google.com/search?q=" + encodeURIComponent(val);
+            }
+          }
+          window.location.href = window.location.protocol + '//' + window.location.host + '/proxy/' + val;
+        }
+
+        if (showNavSearch) {
+          var goBtn = navWidget.querySelector('#nav-go-btn') || (navShadow.querySelector ? navShadow.querySelector('#nav-go-btn') : null);
+          var searchInput = navWidget.querySelector('#nav-search-input') || (navShadow.querySelector ? navShadow.querySelector('#nav-search-input') : null);
+
+          if (goBtn) goBtn.addEventListener('click', function (e) { e.stopPropagation(); handleNavigate(); });
+          if (searchInput) searchInput.addEventListener('keydown', function (e) {
+            e.stopPropagation();
+            if (e.key === 'Enter') handleNavigate();
+          });
+        }
+
+        if (showNavHome) {
+          var homeBtn = navWidget.querySelector('#nav-home-btn') || (navShadow.querySelector ? navShadow.querySelector('#nav-home-btn') : null);
+          if (homeBtn) homeBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            window.location.href = window.location.protocol + '//' + window.location.host + '/';
+          });
+        }
+
+        attachWidgetBehaviors(navContainer, navWidget, 'heavenly_nav_pos', 120, 20);
+      }
+
+      if (window.document && (window.document.readyState === 'interactive' || window.document.readyState === 'complete')) {
+        injectUI();
+      } else if (window.document) {
+        window.document.addEventListener('DOMContentLoaded', injectUI);
+        window.addEventListener('load', injectUI);
+      }
+    } catch (err) {
+      console.error('Error initializing Heavenly widgets:', err);
+    }
+  }
+
   function initForWindow(config, window) {
     console.log("begin unblocker client scripts", config, window);
     initXMLHttpRequest(config, window);
@@ -253,6 +1175,8 @@
     initAppendBodyIframe(config, window);
     initWebSockets(config, window);
     initPushState(config, window);
+    initHeavenlyCloakAndPanic(window);
+    initHeavenlyWidgets(window);
     if (window === global) {
       // leave no trace
       delete global.unblockerInit;
