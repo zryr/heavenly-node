@@ -250,7 +250,7 @@
       if (window !== window.top) return;
 
       var DEFAULT_PRESETS = {
-        classroom: { title: "Classes", icon: "https://ssl.gstatic.com/classroom/favicon.png" },
+        classroom: { title: "Google Classroom", icon: "https://ssl.gstatic.com/classroom/favicon.png" },
         drive: { title: "My Drive - Google Drive", icon: "https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" },
         canvas: { title: "Dashboard", icon: "https://du1ux2871uqvu.cloudfront.net/dist/images/favicon-e10d657a73.ico" },
         khan: { title: "Dashboard | Khan Academy", icon: "https://www.khanacademy.org/favicon.ico" }
@@ -530,19 +530,14 @@
   function initHeavenlyWidgets(window) {
     try {
       if (window !== window.top) return; // Only show in main top window
-      if (window.document && window.document.getElementById('heavenly-scroll-lock-root')) return;
 
-      var settings = {};
-      try {
-        settings = JSON.parse(localStorage.getItem('heavenly_settings') || '{}');
-      } catch (e) {}
-
-      var showScrollLock = settings.showScrollLock !== undefined ? settings.showScrollLock : true;
-      var showMagnifier = settings.showMagnifier !== undefined ? settings.showMagnifier : true;
-      var showNavSearch = settings.showNavSearch !== undefined ? settings.showNavSearch : true;
-      var showNavHome = settings.showNavHome !== undefined ? settings.showNavHome : true;
-      var useWidgetDock = settings.useWidgetDock || false;
-      var dockPosition = settings.dockPosition || 'bottom';
+      function loadFreshSettings() {
+        var s = {};
+        try {
+          s = JSON.parse(localStorage.getItem('heavenly_settings') || '{}');
+        } catch (e) {}
+        return s;
+      }
 
       var scrollLockEnabled = false;
 
@@ -778,10 +773,24 @@
 
       function injectUI() {
         if (!window.document || !window.document.body) return;
-        if (window.document.getElementById('heavenly-scroll-lock-root') || window.document.getElementById('heavenly-dock-root')) return;
 
-        // --- COLLapsible WIDGET DOCK BAR MODE ---
+        var settings = loadFreshSettings();
+        var showScrollLock = settings.showScrollLock !== undefined ? settings.showScrollLock : true;
+        var showMagnifier = settings.showMagnifier !== undefined ? settings.showMagnifier : true;
+        var showNavSearch = settings.showNavSearch !== undefined ? settings.showNavSearch : true;
+        var showNavHome = settings.showNavHome !== undefined ? settings.showNavHome : true;
+        var useWidgetDock = settings.useWidgetDock || false;
+        var dockPosition = settings.dockPosition || 'bottom';
+
+        // --- COLLAPSIBLE WIDGET DOCK BAR MODE ---
         if (useWidgetDock) {
+          // Remove floating widgets if present when dock is active
+          ['heavenly-scroll-lock-root', 'heavenly-magnifier-root', 'heavenly-nav-root'].forEach(function (id) {
+            var el = window.document.getElementById(id);
+            if (el) el.remove();
+          });
+
+          if (window.document.getElementById('heavenly-dock-root')) return;
           var dockContainer = window.document.createElement('div');
           dockContainer.id = 'heavenly-dock-root';
           dockContainer.style.cssText = 'position:fixed;z-index:2147483646;user-select:none;-webkit-user-select:none;font-family:"Outfit",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;';
@@ -984,6 +993,12 @@
 
           return;
         }
+
+        // Remove dock bar if active mode switched to floating
+        var existingDock = window.document.getElementById('heavenly-dock-root');
+        if (existingDock) existingDock.remove();
+
+        if (window.document.getElementById('heavenly-scroll-lock-root') || window.document.getElementById('heavenly-nav-root')) return;
 
         // --- 1. SCROLL LOCK WIDGET ---
         if (showScrollLock) {
@@ -1295,85 +1310,85 @@
         window.addEventListener('scroll', function () {
           if (magEnabled) updateMirrorPosition();
         }, { passive: true });
-      }
 
-      // --- 3. NAVIGATION WIDGET (Search Bar & Home Button) ---
-      if (showNavSearch || showNavHome) {
-        var navContainer = window.document.createElement('div');
-        navContainer.id = 'heavenly-nav-root';
-        navContainer.style.cssText = 'position:fixed;z-index:2147483646;user-select:none;-webkit-user-select:none;font-family:"Outfit",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;';
+        // --- 3. NAVIGATION WIDGET (Search Bar & Home Button) ---
+        if (showNavSearch || showNavHome) {
+          var navContainer = window.document.createElement('div');
+          navContainer.id = 'heavenly-nav-root';
+          navContainer.style.cssText = 'position:fixed;z-index:2147483646;user-select:none;-webkit-user-select:none;font-family:"Outfit",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;';
 
-        var navShadow = navContainer.attachShadow ? navContainer.attachShadow({ mode: 'open' }) : navContainer;
+          var navShadow = navContainer.attachShadow ? navContainer.attachShadow({ mode: 'open' }) : navContainer;
 
-        var navStyle = window.document.createElement('style');
-        navStyle.textContent = widgetCss + [
-          '.nav-input {',
-          '  background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(148, 163, 184, 0.3);',
-          '  color: #f8fafc; padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 500;',
-          '  outline: none; width: 140px; transition: border-color 0.2s, width 0.2s;',
-          '}',
-          '.nav-input:focus { border-color: #38bdf8; width: 180px; background: rgba(15, 23, 42, 0.95); }'
-        ].join('\n');
+          var navStyle = window.document.createElement('style');
+          navStyle.textContent = widgetCss + [
+            '.nav-input {',
+            '  background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(148, 163, 184, 0.3);',
+            '  color: #f8fafc; padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 500;',
+            '  outline: none; width: 140px; transition: border-color 0.2s, width 0.2s;',
+            '}',
+            '.nav-input:focus { border-color: #38bdf8; width: 180px; background: rgba(15, 23, 42, 0.95); }'
+          ].join('\n');
 
-        var navWidget = window.document.createElement('div');
-        navWidget.className = 'heavenly-widget';
+          var navWidget = window.document.createElement('div');
+          navWidget.className = 'heavenly-widget';
 
-        var navHtml = ['<div class="mini-icon" title="Navigation (Click to expand)"><svg class="title-icon" viewBox="0 0 24 24"><path d="M3 12h18M12 3l9 9-9 9"></path></svg></div>', '<div class="widget-content">'];
-        navHtml.push('<div class="drag-handle" title="Click and drag to move"><svg class="title-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg></div>');
+          var navHtml = ['<div class="mini-icon" title="Navigation (Click to expand)"><svg class="title-icon" viewBox="0 0 24 24"><path d="M3 12h18M12 3l9 9-9 9"></path></svg></div>', '<div class="widget-content">'];
+          navHtml.push('<div class="drag-handle" title="Click and drag to move"><svg class="title-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg></div>');
 
-        if (showNavSearch) {
-          navHtml.push('<input type="text" class="nav-input" id="nav-search-input" placeholder="Search or URL..." />');
-          navHtml.push('<button type="button" class="btn-ctrl" id="nav-go-btn">Go</button>');
-        }
-
-        if (showNavHome) {
-          navHtml.push('<button type="button" class="btn-ctrl" id="nav-home-btn" title="Go to Homepage">🏠 Home</button>');
-        }
-
-        navHtml.push('</div>');
-        navWidget.innerHTML = navHtml.join('\n');
-
-        navShadow.appendChild(navStyle);
-        navShadow.appendChild(navWidget);
-        var targetParent = window.document.body || window.document.documentElement;
-        if (targetParent) targetParent.appendChild(navContainer);
-
-        function handleNavigate() {
-          var input = navWidget.querySelector('#nav-search-input') || (navShadow.querySelector ? navShadow.querySelector('#nav-search-input') : null);
-          if (!input) return;
-          var val = input.value.trim();
-          if (!val) return;
-
-          if (val.substr(0, 4) !== "http") {
-            if (val.includes('.') && !val.includes(' ')) {
-              val = "https://" + val;
-            } else {
-              val = "https://google.com/search?q=" + encodeURIComponent(val);
-            }
+          if (showNavSearch) {
+            navHtml.push('<input type="text" class="nav-input" id="nav-search-input" placeholder="Search or URL..." />');
+            navHtml.push('<button type="button" class="btn-ctrl" id="nav-go-btn">Go</button>');
           }
-          window.location.href = window.location.protocol + '//' + window.location.host + '/proxy/' + val;
+
+          if (showNavHome) {
+            navHtml.push('<button type="button" class="btn-ctrl" id="nav-home-btn" title="Go to Homepage">🏠 Home</button>');
+          }
+
+          navHtml.push('</div>');
+          navWidget.innerHTML = navHtml.join('\n');
+
+          navShadow.appendChild(navStyle);
+          navShadow.appendChild(navWidget);
+          var targetParent = window.document.body || window.document.documentElement;
+          if (targetParent) targetParent.appendChild(navContainer);
+
+          function handleNavigate() {
+            var input = navWidget.querySelector('#nav-search-input') || (navShadow.querySelector ? navShadow.querySelector('#nav-search-input') : null);
+            if (!input) return;
+            var val = input.value.trim();
+            if (!val) return;
+
+            if (val.substr(0, 4) !== "http") {
+              if (val.includes('.') && !val.includes(' ')) {
+                val = "https://" + val;
+              } else {
+                val = "https://google.com/search?q=" + encodeURIComponent(val);
+              }
+            }
+            window.location.href = window.location.protocol + '//' + window.location.host + '/proxy/' + val;
+          }
+
+          if (showNavSearch) {
+            var goBtn = navWidget.querySelector('#nav-go-btn') || (navShadow.querySelector ? navShadow.querySelector('#nav-go-btn') : null);
+            var searchInput = navWidget.querySelector('#nav-search-input') || (navShadow.querySelector ? navShadow.querySelector('#nav-search-input') : null);
+
+            if (goBtn) goBtn.addEventListener('click', function (e) { e.stopPropagation(); handleNavigate(); });
+            if (searchInput) searchInput.addEventListener('keydown', function (e) {
+              e.stopPropagation();
+              if (e.key === 'Enter') handleNavigate();
+            });
+          }
+
+          if (showNavHome) {
+            var homeBtn = navWidget.querySelector('#nav-home-btn') || (navShadow.querySelector ? navShadow.querySelector('#nav-home-btn') : null);
+            if (homeBtn) homeBtn.addEventListener('click', function (e) {
+              e.stopPropagation();
+              window.location.href = 'https://heavenly-node.vercel.app/';
+            });
+          }
+
+          attachWidgetBehaviors(navContainer, navWidget, 'heavenly_nav_pos', 120, 20);
         }
-
-        if (showNavSearch) {
-          var goBtn = navWidget.querySelector('#nav-go-btn') || (navShadow.querySelector ? navShadow.querySelector('#nav-go-btn') : null);
-          var searchInput = navWidget.querySelector('#nav-search-input') || (navShadow.querySelector ? navShadow.querySelector('#nav-search-input') : null);
-
-          if (goBtn) goBtn.addEventListener('click', function (e) { e.stopPropagation(); handleNavigate(); });
-          if (searchInput) searchInput.addEventListener('keydown', function (e) {
-            e.stopPropagation();
-            if (e.key === 'Enter') handleNavigate();
-          });
-        }
-
-        if (showNavHome) {
-          var homeBtn = navWidget.querySelector('#nav-home-btn') || (navShadow.querySelector ? navShadow.querySelector('#nav-home-btn') : null);
-          if (homeBtn) homeBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            window.location.href = 'https://heavenly-node.vercel.app/';
-          });
-        }
-
-        attachWidgetBehaviors(navContainer, navWidget, 'heavenly_nav_pos', 120, 20);
       }
 
       if (window.document && (window.document.readyState === 'interactive' || window.document.readyState === 'complete')) {
