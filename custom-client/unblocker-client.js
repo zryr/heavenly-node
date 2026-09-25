@@ -1183,11 +1183,11 @@
           var clone = window.document.body.cloneNode(true);
           // Remove heavenly roots from clone to avoid infinite duplication
           var rootIds = ['heavenly-scroll-lock-root', 'heavenly-magnifier-root', 'heavenly-nav-root', 'heavenly-touch-panic-root', 'heavenly-dock-root'];
-          for (var rIdx = clone.children.length - 1; rIdx >= 0; rIdx--) {
-            var childEl = clone.children[rIdx];
-            if (childEl && rootIds.indexOf(childEl.id) !== -1) {
-              if (childEl.remove) childEl.remove();
-              else if (childEl.parentNode) childEl.parentNode.removeChild(childEl);
+          for (var rIdx = 0; rIdx < rootIds.length; rIdx++) {
+            var rootEl = clone.querySelector('#' + rootIds[rIdx]);
+            if (rootEl) {
+              if (rootEl.remove) rootEl.remove();
+              else if (rootEl.parentNode) rootEl.parentNode.removeChild(rootEl);
             }
           }
 
