@@ -1182,8 +1182,14 @@
           // Mirror clone of document body
           var clone = window.document.body.cloneNode(true);
           // Remove heavenly roots from clone to avoid infinite duplication
-          var roots = clone.querySelectorAll('#heavenly-scroll-lock-root, #heavenly-magnifier-root');
-          roots.forEach(function (r) { r.remove(); });
+          var rootIds = ['heavenly-scroll-lock-root', 'heavenly-magnifier-root', 'heavenly-nav-root', 'heavenly-touch-panic-root', 'heavenly-dock-root'];
+          for (var rIdx = clone.children.length - 1; rIdx >= 0; rIdx--) {
+            var childEl = clone.children[rIdx];
+            if (childEl && rootIds.indexOf(childEl.id) !== -1) {
+              if (childEl.remove) childEl.remove();
+              else if (childEl.parentNode) childEl.parentNode.removeChild(childEl);
+            }
+          }
 
           mirrorNode = window.document.createElement('div');
           mirrorNode.className = 'lens-mirror';
