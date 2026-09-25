@@ -245,7 +245,31 @@
     };
   }
 
-  function initHeavenlyCloakAndPanic(window) {
+  function loadHeavenlySettings(window) {
+    var saved = {};
+    try {
+      saved = JSON.parse((window.localStorage || localStorage).getItem('heavenly_settings') || '{}');
+    } catch (e) {}
+
+    return {
+      autoCloak: saved.autoCloak !== undefined ? saved.autoCloak : true,
+      persistentCloak: saved.persistentCloak || false,
+      selectedPreset: saved.selectedPreset || 'classroom',
+      customPresets: saved.customPresets || {},
+      panicKeyEnable: saved.panicKeyEnable || false,
+      panicKey: saved.panicKey || '`',
+      touchPanic: saved.touchPanic || false,
+      panicUrl: saved.panicUrl || 'https://classroom.google.com',
+      showScrollLock: saved.showScrollLock !== undefined ? saved.showScrollLock : true,
+      showMagnifier: saved.showMagnifier !== undefined ? saved.showMagnifier : true,
+      showNavSearch: saved.showNavSearch !== undefined ? saved.showNavSearch : true,
+      showNavHome: saved.showNavHome !== undefined ? saved.showNavHome : true,
+      useWidgetDock: saved.useWidgetDock || false,
+      dockPosition: saved.dockPosition || 'bottom'
+    };
+  }
+
+  function initHeavenlyCloakAndPanic(window, settings) {
     try {
       if (window !== window.top) return;
 
@@ -256,31 +280,9 @@
         khan: { title: "Dashboard | Khan Academy", icon: "https://www.khanacademy.org/favicon.ico" }
       };
 
-      function loadSettings() {
-        var saved = {};
-        try {
-          saved = JSON.parse(localStorage.getItem('heavenly_settings') || '{}');
-        } catch (e) {}
-
-        return {
-          autoCloak: saved.autoCloak !== undefined ? saved.autoCloak : true,
-          persistentCloak: saved.persistentCloak || false,
-          selectedPreset: saved.selectedPreset || 'classroom',
-          customPresets: saved.customPresets || {},
-          panicKeyEnable: saved.panicKeyEnable || false,
-          panicKey: saved.panicKey || '`',
-          touchPanic: saved.touchPanic || false,
-          panicUrl: saved.panicUrl || 'https://classroom.google.com',
-          showScrollLock: saved.showScrollLock !== undefined ? saved.showScrollLock : true,
-          showMagnifier: saved.showMagnifier !== undefined ? saved.showMagnifier : true,
-          showNavSearch: saved.showNavSearch !== undefined ? saved.showNavSearch : true,
-          showNavHome: saved.showNavHome !== undefined ? saved.showNavHome : true,
-          useWidgetDock: saved.useWidgetDock || false,
-          dockPosition: saved.dockPosition || 'bottom'
-        };
+      if (!settings) {
+        settings = loadHeavenlySettings(window);
       }
-
-      var settings = loadSettings();
       var originalTitle = window.document.title;
       var originalFavicon = null;
 
@@ -527,16 +529,12 @@
     }
   }
 
-  function initHeavenlyWidgets(window) {
+  function initHeavenlyWidgets(window, settings) {
     try {
       if (window !== window.top) return; // Only show in main top window
 
-      function loadFreshSettings() {
-        var s = {};
-        try {
-          s = JSON.parse(localStorage.getItem('heavenly_settings') || '{}');
-        } catch (e) {}
-        return s;
+      if (!settings) {
+        settings = loadHeavenlySettings(window);
       }
 
       var scrollLockEnabled = false;
@@ -774,7 +772,6 @@
       function injectUI() {
         if (!window.document || !window.document.body) return;
 
-        var settings = loadFreshSettings();
         var showScrollLock = settings.showScrollLock !== undefined ? settings.showScrollLock : true;
         var showMagnifier = settings.showMagnifier !== undefined ? settings.showMagnifier : true;
         var showNavSearch = settings.showNavSearch !== undefined ? settings.showNavSearch : true;
@@ -1410,8 +1407,9 @@
     initAppendBodyIframe(config, window);
     initWebSockets(config, window);
     initPushState(config, window);
-    initHeavenlyCloakAndPanic(window);
-    initHeavenlyWidgets(window);
+    var settings = loadHeavenlySettings(window);
+    initHeavenlyCloakAndPanic(window, settings);
+    initHeavenlyWidgets(window, settings);
     if (window === global) {
       // leave no trace
       delete global.unblockerInit;
