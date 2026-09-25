@@ -148,6 +148,120 @@
       position: relative;
     }
 
+    .history-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 18px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.2);
+      padding: 10px;
+      z-index: 100;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .history-dropdown.active {
+      display: block;
+    }
+
+    .history-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .history-card:last-child {
+      margin-bottom: 0;
+    }
+
+    .history-card:hover {
+      background: rgba(30, 41, 59, 0.85);
+      border-color: rgba(56, 189, 248, 0.4);
+      transform: translateX(2px);
+    }
+
+    .history-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow: hidden;
+      margin-right: 8px;
+    }
+
+    .history-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-url {
+      font-size: 0.78rem;
+      color: #38bdf8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-delete-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .history-delete-btn:hover {
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.15);
+    }
+
+    .history-clear-btn {
+      width: 100%;
+      padding: 8px;
+      margin-top: 6px;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 10px;
+      color: #fca5a5;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .history-clear-btn:hover {
+      background: rgba(239, 68, 68, 0.25);
+      color: #ffffff;
+    }
+
+    .history-empty {
+      padding: 12px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+
     input[type="text"] {
       width: 100%;
       padding: 16px 20px;
@@ -481,7 +595,8 @@
 
     <form action="no-js" method="get" id="unblocker-form" class="search-form">
       <div class="input-wrapper">
-        <input type="text" id="url" name="url" placeholder="Enter a URL or search query..." autofocus="autofocus" />
+        <input type="text" id="url" name="url" placeholder="Enter a URL or search query..." autofocus="autofocus" autocomplete="off" />
+        <div id="history-dropdown" class="history-dropdown"></div>
       </div>
       <input type="submit" value="Go" />
     </form>
@@ -973,11 +1088,134 @@
       };
     }
 
+    // --- Browsing History Manager ---
+    function loadHistory() {
+      try {
+        return JSON.parse(localStorage.getItem('heavenly_history') || '[]');
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveHistory(history) {
+      try {
+        localStorage.setItem('heavenly_history', JSON.stringify(history));
+      } catch (e) {}
+    }
+
+    function renderHistoryDropdown(filterText) {
+      var history = loadHistory();
+      var dropdown = $('history-dropdown');
+      if (!dropdown) return;
+
+      var filter = (filterText || '').trim().toLowerCase();
+      var filtered = history.filter(function (item) {
+        if (!filter) return true;
+        var t = (item.title || '').toLowerCase();
+        var u = (item.url || '').toLowerCase();
+        return t.includes(filter) || u.includes(filter);
+      });
+
+      dropdown.innerHTML = '';
+
+      if (filtered.length === 0) {
+        var emptyEl = document.createElement('div');
+        emptyEl.className = 'history-empty';
+        emptyEl.textContent = filter ? 'No matching history found' : 'No browsing history yet';
+        dropdown.appendChild(emptyEl);
+        return;
+      }
+
+      var listContainer = document.createElement('div');
+      filtered.forEach(function (item, idx) {
+        var card = document.createElement('div');
+        card.className = 'history-card';
+
+        var info = document.createElement('div');
+        info.className = 'history-info';
+
+        var titleEl = document.createElement('div');
+        titleEl.className = 'history-title';
+        titleEl.textContent = item.title || item.url;
+
+        var urlEl = document.createElement('div');
+        urlEl.className = 'history-url';
+        urlEl.textContent = item.url;
+
+        info.appendChild(titleEl);
+        info.appendChild(urlEl);
+
+        var deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'history-delete-btn';
+        deleteBtn.title = 'Remove item from history';
+        deleteBtn.textContent = '✕';
+
+        deleteBtn.onclick = function (e) {
+          e.stopPropagation();
+          // Find real index in history array
+          var current = loadHistory();
+          var realIndex = current.findIndex(function (h) { return h.url === item.url; });
+          if (realIndex > -1) {
+            current.splice(realIndex, 1);
+            saveHistory(current);
+            renderHistoryDropdown($('url').value);
+          }
+        };
+
+        card.onclick = function () {
+          $('url').value = item.url;
+          dropdown.classList.remove('active');
+        };
+
+        card.appendChild(info);
+        card.appendChild(deleteBtn);
+        listContainer.appendChild(card);
+      });
+
+      dropdown.appendChild(listContainer);
+
+      // Clear History button
+      var clearBtn = document.createElement('button');
+      clearBtn.type = 'button';
+      clearBtn.className = 'history-clear-btn';
+      clearBtn.textContent = '🗑️ Clear History';
+      clearBtn.onclick = function (e) {
+        e.stopPropagation();
+        saveHistory([]);
+        renderHistoryDropdown($('url').value);
+      };
+      dropdown.appendChild(clearBtn);
+    }
+
+    function initHistoryDropdown() {
+      var input = $('url');
+      var dropdown = $('history-dropdown');
+      if (!input || !dropdown) return;
+
+      var showDropdown = function () {
+        renderHistoryDropdown(input.value);
+        dropdown.classList.add('active');
+      };
+
+      input.onfocus = showDropdown;
+      input.onclick = showDropdown;
+      input.oninput = showDropdown;
+
+      // Hide dropdown when clicking outside
+      document.addEventListener('click', function (e) {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+          dropdown.classList.remove('active');
+        }
+      });
+    }
+
     window.onload = function () {
-      $('url').focus();
-      checkError();
       bindSettingsEvents();
       initLandingCloak();
+      initHistoryDropdown();
+      checkError();
+      $('url').focus();
     }
   </script>
 

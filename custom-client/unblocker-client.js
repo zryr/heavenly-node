@@ -1093,7 +1093,17 @@
             '  background: none; border: none; color: #94a3b8; font-size: 14px;',
             '  cursor: pointer; padding: 0 4px; line-height: 1;',
             '}',
-            '.btn-close-lens:hover { color: #ef4444; }'
+            '.btn-close-lens:hover { color: #ef4444; }',
+            '/* Resize Handles */',
+            '.resize-handle { position: absolute; z-index: 20; background: transparent; }',
+            '.resize-handle-n { top: -4px; left: 8px; right: 8px; height: 8px; cursor: ns-resize; }',
+            '.resize-handle-s { bottom: -4px; left: 8px; right: 8px; height: 8px; cursor: ns-resize; }',
+            '.resize-handle-e { top: 8px; right: -4px; bottom: 8px; width: 8px; cursor: ew-resize; }',
+            '.resize-handle-w { top: 8px; left: -4px; bottom: 8px; width: 8px; cursor: ew-resize; }',
+            '.resize-handle-nw { top: -4px; left: -4px; width: 12px; height: 12px; cursor: nwse-resize; }',
+            '.resize-handle-ne { top: -4px; right: -4px; width: 12px; height: 12px; cursor: nesw-resize; }',
+            '.resize-handle-sw { bottom: -4px; left: -4px; width: 12px; height: 12px; cursor: nesw-resize; }',
+            '.resize-handle-se { bottom: -4px; right: -4px; width: 12px; height: 12px; cursor: nwse-resize; }'
           ].join('\n');
 
           var magWidget = window.document.createElement('div');
@@ -1125,8 +1135,9 @@
         // --- Magnifier Lens Frame Logic ---
         var magEnabled = false;
         var zoomLevel = 2.0;
-        var lensSize = 220; // 160 (S), 220 (M), 300 (L)
-        var lensPos = { left: Math.max(50, Math.floor((window.innerWidth || 800) / 2 - 110)), top: Math.max(50, Math.floor((window.innerHeight || 600) / 2 - 110)) };
+        var lensWidth = 260;
+        var lensHeight = 220;
+        var lensPos = { left: Math.max(50, Math.floor((window.innerWidth || 800) / 2 - 130)), top: Math.max(50, Math.floor((window.innerHeight || 600) / 2 - 110)) };
 
         try {
           var savedLens = localStorage.getItem('heavenly_lens_pos');
@@ -1135,22 +1146,36 @@
             if (typeof lp.left === 'number') lensPos.left = lp.left;
             if (typeof lp.top === 'number') lensPos.top = lp.top;
             if (typeof lp.zoom === 'number') zoomLevel = lp.zoom;
-            if (typeof lp.size === 'number') lensSize = lp.size;
+            if (typeof lp.width === 'number') lensWidth = Math.max(150, lp.width);
+            if (typeof lp.height === 'number') lensHeight = Math.max(100, lp.height);
+            else if (typeof lp.size === 'number') { lensWidth = lp.size; lensHeight = lp.size; }
           }
         } catch (e) {}
 
         var lensFrame = null;
         var mirrorNode = null;
 
+        function saveLensState() {
+          try {
+            localStorage.setItem('heavenly_lens_pos', JSON.stringify({
+              left: lensPos.left,
+              top: lensPos.top,
+              width: lensWidth,
+              height: lensHeight,
+              zoom: zoomLevel
+            }));
+          } catch (e) {}
+        }
+
         function updateMirrorPosition() {
           if (!lensFrame || !mirrorNode) return;
-          var centerX = lensPos.left + lensSize / 2;
-          var centerY = lensPos.top + lensSize / 2 + 14; // header offset
+          var centerX = lensPos.left + lensWidth / 2;
+          var centerY = lensPos.top + 14 + (lensHeight - 28) / 2;
           var scrollX = window.scrollX || window.pageXOffset || 0;
           var scrollY = window.scrollY || window.pageYOffset || 0;
 
-          var mirrorLeft = (lensSize / 2) - ((centerX + scrollX) * zoomLevel);
-          var mirrorTop = ((lensSize - 28) / 2) - ((centerY + scrollY) * zoomLevel);
+          var mirrorLeft = (lensWidth / 2) - ((centerX + scrollX) * zoomLevel);
+          var mirrorTop = ((lensHeight - 28) / 2) - ((centerY + scrollY) * zoomLevel);
 
           mirrorNode.style.transform = 'scale(' + zoomLevel + ')';
           mirrorNode.style.left = mirrorLeft + 'px';
@@ -1162,8 +1187,8 @@
 
           lensFrame = window.document.createElement('div');
           lensFrame.className = 'lens-frame';
-          lensFrame.style.width = lensSize + 'px';
-          lensFrame.style.height = lensSize + 'px';
+          lensFrame.style.width = lensWidth + 'px';
+          lensFrame.style.height = lensHeight + 'px';
           lensFrame.style.left = lensPos.left + 'px';
           lensFrame.style.top = lensPos.top + 'px';
 
@@ -1172,12 +1197,29 @@
             '  <span>🔍 Lens (' + zoomLevel.toFixed(1) + 'x)</span>',
             '  <button type="button" class="btn-close-lens" id="close-lens-btn">✕</button>',
             '</div>',
-            '<div class="lens-view" id="lens-view"></div>'
+            '<div class="lens-view" id="lens-view"></div>',
+            '<div class="resize-handle resize-handle-n" data-handle="n"></div>',
+            '<div class="resize-handle resize-handle-s" data-handle="s"></div>',
+            '<div class="resize-handle resize-handle-e" data-handle="e"></div>',
+            '<div class="resize-handle resize-handle-w" data-handle="w"></div>',
+            '<div class="resize-handle resize-handle-nw" data-handle="nw"></div>',
+            '<div class="resize-handle resize-handle-ne" data-handle="ne"></div>',
+            '<div class="resize-handle resize-handle-sw" data-handle="sw"></div>',
+            '<div class="resize-handle resize-handle-se" data-handle="se"></div>'
           ].join('\n');
 
           magShadow.appendChild(lensFrame);
 
           var viewEl = lensFrame.querySelector('#lens-view');
+
+          // Copy head stylesheets & inline styles into lens view so CSS rules apply inside Shadow DOM
+          var baseEl = window.document.querySelector('base');
+          if (baseEl) viewEl.appendChild(baseEl.cloneNode(true));
+
+          var styleEls = window.document.querySelectorAll('style, link[rel="stylesheet"]');
+          for (var sIdx = 0; sIdx < styleEls.length; sIdx++) {
+            viewEl.appendChild(styleEls[sIdx].cloneNode(true));
+          }
 
           // Mirror clone of document body
           var clone = window.document.body.cloneNode(true);
@@ -1189,6 +1231,16 @@
               if (rootEl.remove) rootEl.remove();
               else if (rootEl.parentNode) rootEl.parentNode.removeChild(rootEl);
             }
+          }
+
+          // Copy canvas content if present
+          var origCanvases = window.document.body.querySelectorAll('canvas');
+          var cloneCanvases = clone.querySelectorAll('canvas');
+          for (var cIdx = 0; cIdx < origCanvases.length && cIdx < cloneCanvases.length; cIdx++) {
+            try {
+              var ctx = cloneCanvases[cIdx].getContext('2d');
+              if (ctx) ctx.drawImage(origCanvases[cIdx], 0, 0);
+            } catch (e) {}
           }
 
           mirrorNode = window.document.createElement('div');
@@ -1224,8 +1276,8 @@
               if (!isDraggingLens) return;
               var dx = (me.clientX || 0) - startX;
               var dy = (me.clientY || 0) - startY;
-              lensPos.left = Math.max(0, Math.min(startLeft + dx, window.innerWidth - lensSize));
-              lensPos.top = Math.max(0, Math.min(startTop + dy, window.innerHeight - lensSize));
+              lensPos.left = Math.max(0, Math.min(startLeft + dx, (window.innerWidth || 800) - lensWidth));
+              lensPos.top = Math.max(0, Math.min(startTop + dy, (window.innerHeight || 600) - lensHeight));
               lensFrame.style.left = lensPos.left + 'px';
               lensFrame.style.top = lensPos.top + 'px';
               updateMirrorPosition();
@@ -1235,14 +1287,82 @@
               isDraggingLens = false;
               window.removeEventListener('mousemove', onMove, true);
               window.removeEventListener('mouseup', onUp, true);
-              try {
-                localStorage.setItem('heavenly_lens_pos', JSON.stringify({ left: lensPos.left, top: lensPos.top, zoom: zoomLevel, size: lensSize }));
-              } catch (e) {}
+              saveLensState();
             };
 
             window.addEventListener('mousemove', onMove, true);
             window.addEventListener('mouseup', onUp, true);
           });
+
+          // Resizing Handles Logic (Edges & Corners)
+          var handles = lensFrame.querySelectorAll('.resize-handle');
+          for (var hIdx = 0; hIdx < handles.length; hIdx++) {
+            (function (hEl) {
+              hEl.addEventListener('mousedown', function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+                var handleType = hEl.getAttribute('data-handle');
+                var rStartX = e.clientX;
+                var rStartY = e.clientY;
+                var startW = lensWidth;
+                var startH = lensHeight;
+                var startL = lensPos.left;
+                var startT = lensPos.top;
+
+                var onResizing = function (me) {
+                  var dx = me.clientX - rStartX;
+                  var dy = me.clientY - rStartY;
+
+                  var newW = startW;
+                  var newH = startH;
+                  var newL = startL;
+                  var newT = startT;
+
+                  if (handleType.includes('e')) {
+                    newW = Math.max(150, startW + dx);
+                  }
+                  if (handleType.includes('s')) {
+                    newH = Math.max(100, startH + dy);
+                  }
+                  if (handleType.includes('w')) {
+                    var calcW = startW - dx;
+                    if (calcW >= 150) {
+                      newW = calcW;
+                      newL = startL + dx;
+                    }
+                  }
+                  if (handleType.includes('n')) {
+                    var calcH = startH - dy;
+                    if (calcH >= 100) {
+                      newH = calcH;
+                      newT = startT + dy;
+                    }
+                  }
+
+                  lensWidth = newW;
+                  lensHeight = newH;
+                  lensPos.left = newL;
+                  lensPos.top = newT;
+
+                  lensFrame.style.width = lensWidth + 'px';
+                  lensFrame.style.height = lensHeight + 'px';
+                  lensFrame.style.left = lensPos.left + 'px';
+                  lensFrame.style.top = lensPos.top + 'px';
+
+                  updateMirrorPosition();
+                };
+
+                var onResizeEnd = function () {
+                  window.removeEventListener('mousemove', onResizing, true);
+                  window.removeEventListener('mouseup', onResizeEnd, true);
+                  saveLensState();
+                };
+
+                window.addEventListener('mousemove', onResizing, true);
+                window.addEventListener('mouseup', onResizeEnd, true);
+              });
+            })(handles[hIdx]);
+          }
         }
 
         function destroyLensFrame() {
@@ -1405,6 +1525,41 @@
     }
   }
 
+  function saveToHeavenlyHistory(window, config) {
+    try {
+      if (window !== window.top) return;
+
+      var path = window.location.pathname;
+      var prefix = config.prefix || '/proxy/';
+      if (!path.startsWith(prefix)) return;
+
+      var targetUrl = path.substr(prefix.length) + window.location.search + window.location.hash;
+      if (!targetUrl || targetUrl.startsWith('about:') || targetUrl.startsWith('data:')) return;
+
+      var title = window.document.title || targetUrl;
+
+      var current = JSON.parse(localStorage.getItem('heavenly_history') || '[]');
+
+      // Filter out existing duplicates of this url
+      current = current.filter(function (item) {
+        return item.url !== targetUrl;
+      });
+
+      // Add to beginning of array
+      current.unshift({
+        url: targetUrl,
+        title: title
+      });
+
+      // Limit to 10 items
+      if (current.length > 10) {
+        current = current.slice(0, 10);
+      }
+
+      localStorage.setItem('heavenly_history', JSON.stringify(current));
+    } catch (e) {}
+  }
+
   function initForWindow(config, window) {
     console.log("begin unblocker client scripts", config, window);
     initXMLHttpRequest(config, window);
@@ -1416,6 +1571,15 @@
     var settings = loadHeavenlySettings(window);
     initHeavenlyCloakAndPanic(window, settings);
     initHeavenlyWidgets(window, settings);
+
+    if (window.document && (window.document.readyState === 'interactive' || window.document.readyState === 'complete')) {
+      saveToHeavenlyHistory(window, config);
+    } else if (window.document) {
+      window.document.addEventListener('DOMContentLoaded', function () {
+        saveToHeavenlyHistory(window, config);
+      });
+    }
+
     if (window === global) {
       // leave no trace
       delete global.unblockerInit;
