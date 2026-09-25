@@ -250,7 +250,7 @@
       if (window !== window.top) return;
 
       var DEFAULT_PRESETS = {
-        classroom: { title: "Classes", icon: "https://ssl.gstatic.com/classroom/favicon.png" },
+        classroom: { title: "Google Classroom", icon: "https://ssl.gstatic.com/classroom/favicon.png" },
         drive: { title: "My Drive - Google Drive", icon: "https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" },
         canvas: { title: "Dashboard", icon: "https://du1ux2871uqvu.cloudfront.net/dist/images/favicon-e10d657a73.ico" },
         khan: { title: "Dashboard | Khan Academy", icon: "https://www.khanacademy.org/favicon.ico" }
@@ -274,7 +274,9 @@
           showScrollLock: saved.showScrollLock !== undefined ? saved.showScrollLock : true,
           showMagnifier: saved.showMagnifier !== undefined ? saved.showMagnifier : true,
           showNavSearch: saved.showNavSearch !== undefined ? saved.showNavSearch : true,
-          showNavHome: saved.showNavHome !== undefined ? saved.showNavHome : true
+          showNavHome: saved.showNavHome !== undefined ? saved.showNavHome : true,
+          useWidgetDock: saved.useWidgetDock || false,
+          dockPosition: saved.dockPosition || 'bottom'
         };
       }
 
@@ -528,17 +530,14 @@
   function initHeavenlyWidgets(window) {
     try {
       if (window !== window.top) return; // Only show in main top window
-      if (window.document && window.document.getElementById('heavenly-scroll-lock-root')) return;
 
-      var settings = {};
-      try {
-        settings = JSON.parse(localStorage.getItem('heavenly_settings') || '{}');
-      } catch (e) {}
-
-      var showScrollLock = settings.showScrollLock !== undefined ? settings.showScrollLock : true;
-      var showMagnifier = settings.showMagnifier !== undefined ? settings.showMagnifier : true;
-      var showNavSearch = settings.showNavSearch !== undefined ? settings.showNavSearch : true;
-      var showNavHome = settings.showNavHome !== undefined ? settings.showNavHome : true;
+      function loadFreshSettings() {
+        var s = {};
+        try {
+          s = JSON.parse(localStorage.getItem('heavenly_settings') || '{}');
+        } catch (e) {}
+        return s;
+      }
 
       var scrollLockEnabled = false;
 
@@ -626,6 +625,17 @@
         '.btn-toggle.active {',
         '  background: linear-gradient(135deg, #38bdf8 0%, #60a5fa 100%);',
         '  border: 1px solid transparent; color: #030712; box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);',
+        '}',
+        '.nav-input {',
+        '  background: rgba(30, 41, 59, 0.85); border: 1px solid rgba(148, 163, 184, 0.35);',
+        '  color: #f8fafc; padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 500;',
+        '  outline: none; width: 150px; transition: border-color 0.2s, width 0.2s, box-shadow 0.2s;',
+        '  font-family: inherit;',
+        '}',
+        '.nav-input::placeholder { color: #94a3b8; }',
+        '.nav-input:focus {',
+        '  border-color: #38bdf8; width: 190px; background: rgba(15, 23, 42, 0.95);',
+        '  box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);',
         '}'
       ].join('\n');
 
@@ -763,7 +773,232 @@
 
       function injectUI() {
         if (!window.document || !window.document.body) return;
-        if (window.document.getElementById('heavenly-scroll-lock-root')) return;
+
+        var settings = loadFreshSettings();
+        var showScrollLock = settings.showScrollLock !== undefined ? settings.showScrollLock : true;
+        var showMagnifier = settings.showMagnifier !== undefined ? settings.showMagnifier : true;
+        var showNavSearch = settings.showNavSearch !== undefined ? settings.showNavSearch : true;
+        var showNavHome = settings.showNavHome !== undefined ? settings.showNavHome : true;
+        var useWidgetDock = settings.useWidgetDock || false;
+        var dockPosition = settings.dockPosition || 'bottom';
+
+        // --- COLLAPSIBLE WIDGET DOCK BAR MODE ---
+        if (useWidgetDock) {
+          // Remove floating widgets if present when dock is active
+          ['heavenly-scroll-lock-root', 'heavenly-magnifier-root', 'heavenly-nav-root'].forEach(function (id) {
+            var el = window.document.getElementById(id);
+            if (el) el.remove();
+          });
+
+          if (window.document.getElementById('heavenly-dock-root')) return;
+          var dockContainer = window.document.createElement('div');
+          dockContainer.id = 'heavenly-dock-root';
+          dockContainer.style.cssText = 'position:fixed;z-index:2147483646;user-select:none;-webkit-user-select:none;font-family:"Outfit",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;';
+
+          var dockShadow = dockContainer.attachShadow ? dockContainer.attachShadow({ mode: 'open' }) : dockContainer;
+
+          var dockCss = widgetCss + [
+            '.dock-wrapper {',
+            '  position: fixed; display: flex; align-items: center; justify-content: center;',
+            '  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: auto;',
+            '}',
+            '.dock-bar {',
+            '  background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);',
+            '  border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 20px;',
+            '  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.25);',
+            '  padding: 10px 16px; display: flex; align-items: center; gap: 12px; color: #f8fafc;',
+            '}',
+            '.pull-tab {',
+            '  background: linear-gradient(135deg, rgba(56, 189, 248, 0.9) 0%, rgba(59, 130, 246, 0.9) 100%);',
+            '  color: #030712; border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 50%;',
+            '  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;',
+            '  cursor: pointer; box-shadow: 0 0 15px rgba(56, 189, 248, 0.6); outline: none;',
+            '  font-size: 14px; font-weight: 700; transition: transform 0.3s ease, box-shadow 0.3s ease; flex-shrink: 0;',
+            '}',
+            '.pull-tab:hover { transform: scale(1.12); box-shadow: 0 0 22px rgba(56, 189, 248, 0.9); }',
+            '/* Dock Positions */',
+            '.dock-bottom { bottom: 12px; left: 50%; transform: translateX(-50%); flex-direction: column; }',
+            '.dock-bottom.collapsed { transform: translate(-50%, calc(100% - 16px)); }',
+            '.dock-bottom .pull-tab { margin-bottom: 6px; }',
+            '.dock-top { top: 12px; left: 50%; transform: translateX(-50%); flex-direction: column-reverse; }',
+            '.dock-top.collapsed { transform: translate(-50%, calc(-100% + 16px)); }',
+            '.dock-top .pull-tab { margin-top: 6px; }',
+            '.dock-left { left: 12px; top: 50%; transform: translateY(-50%); flex-direction: row-reverse; }',
+            '.dock-left .dock-bar { flex-direction: column; }',
+            '.dock-left.collapsed { transform: translate(calc(-100% + 16px), -50%); }',
+            '.dock-left .pull-tab { margin-left: 6px; }',
+            '.dock-right { right: 12px; top: 50%; transform: translateY(-50%); flex-direction: row; }',
+            '.dock-right .dock-bar { flex-direction: column; }',
+            '.dock-right.collapsed { transform: translate(calc(100% - 16px), -50%); }',
+            '.dock-right .pull-tab { margin-right: 6px; }',
+            '.dock-item { display: flex; align-items: center; gap: 8px; }',
+            '.dock-divider { width: 1px; height: 24px; background: rgba(148, 163, 184, 0.2); }',
+            '.dock-left .dock-divider, .dock-right .dock-divider { width: 24px; height: 1px; }'
+          ].join('\n');
+
+          var dockStyle = window.document.createElement('style');
+          dockStyle.textContent = dockCss;
+
+          var arrowSymbol = '▲';
+          if (dockPosition === 'bottom') arrowSymbol = '▼';
+          else if (dockPosition === 'top') arrowSymbol = '▲';
+          else if (dockPosition === 'left') arrowSymbol = '◄';
+          else if (dockPosition === 'right') arrowSymbol = '►';
+
+          var wrapper = window.document.createElement('div');
+          wrapper.className = 'dock-wrapper dock-' + dockPosition;
+
+          var pullBtn = window.document.createElement('button');
+          pullBtn.type = 'button';
+          pullBtn.className = 'pull-tab';
+          pullBtn.title = 'Toggle Dock Bar';
+          pullBtn.innerHTML = '<span>' + arrowSymbol + '</span>';
+
+          var dockBar = window.document.createElement('div');
+          dockBar.className = 'dock-bar';
+
+          var items = [];
+
+          if (showNavHome) {
+            items.push('<button type="button" class="btn-ctrl" id="dock-home-btn" title="Go Home">🏠 Home</button>');
+          }
+
+          if (showNavSearch) {
+            items.push('<div class="dock-item"><input type="text" class="nav-input" id="dock-search-input" placeholder="Search or URL..." /><button type="button" class="btn-ctrl" id="dock-go-btn">Go</button></div>');
+          }
+
+          if (showScrollLock) {
+            items.push('<div class="dock-item"><span style="font-size:12px;font-weight:600;color:#e0f2fe;">Scroll Lock</span><button type="button" class="btn-toggle" id="dock-scroll-btn"><span>🔓 OFF</span></button></div>');
+          }
+
+          if (showMagnifier) {
+            items.push('<div class="dock-item"><button type="button" class="btn-toggle" id="dock-mag-btn"><span>🔍 Mag OFF</span></button><button type="button" class="btn-ctrl" id="dock-zoom-out">-</button><span id="dock-zoom-label" style="font-size:11px;font-weight:700;color:#38bdf8;">2.0x</span><button type="button" class="btn-ctrl" id="dock-zoom-in">+</button></div>');
+          }
+
+          dockBar.innerHTML = items.join('<div class="dock-divider"></div>');
+
+          wrapper.appendChild(pullBtn);
+          wrapper.appendChild(dockBar);
+          dockShadow.appendChild(dockStyle);
+          dockShadow.appendChild(wrapper);
+
+          var targetParent = window.document.body || window.document.documentElement;
+          if (targetParent) targetParent.appendChild(dockContainer);
+
+          var isCollapsed = false;
+          pullBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            isCollapsed = !isCollapsed;
+            if (isCollapsed) {
+              wrapper.classList.add('collapsed');
+              pullBtn.querySelector('span').style.transform = 'rotate(180deg)';
+            } else {
+              wrapper.classList.remove('collapsed');
+              pullBtn.querySelector('span').style.transform = 'rotate(0deg)';
+            }
+          });
+
+          // Wire up Home button
+          if (showNavHome) {
+            var homeBtn = dockBar.querySelector('#dock-home-btn');
+            if (homeBtn) homeBtn.addEventListener('click', function (e) {
+              e.stopPropagation();
+              window.location.href = 'https://heavenly-node.vercel.app/';
+            });
+          }
+
+          // Wire up Search
+          if (showNavSearch) {
+            var goBtn = dockBar.querySelector('#dock-go-btn');
+            var searchInput = dockBar.querySelector('#dock-search-input');
+            var handleNav = function () {
+              if (!searchInput) return;
+              var val = searchInput.value.trim();
+              if (!val) return;
+              if (val.substr(0, 4) !== "http") {
+                if (val.includes('.') && !val.includes(' ')) {
+                  val = "https://" + val;
+                } else {
+                  val = "https://google.com/search?q=" + encodeURIComponent(val);
+                }
+              }
+              window.location.href = window.location.protocol + '//' + window.location.host + '/proxy/' + val;
+            };
+            if (goBtn) goBtn.addEventListener('click', function (e) { e.stopPropagation(); handleNav(); });
+            if (searchInput) searchInput.addEventListener('keydown', function (e) {
+              e.stopPropagation();
+              if (e.key === 'Enter') handleNav();
+            });
+          }
+
+          // Wire up Scroll Lock
+          if (showScrollLock) {
+            var scrollBtn = dockBar.querySelector('#dock-scroll-btn');
+            if (scrollBtn) scrollBtn.addEventListener('click', function (e) {
+              e.stopPropagation();
+              scrollLockEnabled = !scrollLockEnabled;
+              if (scrollLockEnabled) {
+                scrollBtn.classList.add('active');
+                scrollBtn.innerHTML = '<span>🔒 ON</span>';
+              } else {
+                scrollBtn.classList.remove('active');
+                scrollBtn.innerHTML = '<span>🔓 OFF</span>';
+              }
+            });
+          }
+
+          // Wire up Magnifier
+          if (showMagnifier) {
+            var magBtn = dockBar.querySelector('#dock-mag-btn');
+            var zoomInBtn = dockBar.querySelector('#dock-zoom-in');
+            var zoomOutBtn = dockBar.querySelector('#dock-zoom-out');
+            var zoomLabel = dockBar.querySelector('#dock-zoom-label');
+
+            if (magBtn) magBtn.addEventListener('click', function (e) {
+              e.stopPropagation();
+              toggleMagnifier();
+              if (magEnabled) {
+                magBtn.classList.add('active');
+                magBtn.innerHTML = '<span>🔍 Mag ON</span>';
+              } else {
+                magBtn.classList.remove('active');
+                magBtn.innerHTML = '<span>🔍 Mag OFF</span>';
+              }
+            });
+
+            if (zoomInBtn) zoomInBtn.addEventListener('click', function (e) {
+              e.stopPropagation();
+              if (zoomLevel < 4.0) {
+                zoomLevel = Math.round((zoomLevel + 0.5) * 10) / 10;
+                if (zoomLabel) zoomLabel.textContent = zoomLevel.toFixed(1) + 'x';
+                if (lensFrame) {
+                  lensFrame.querySelector('#lens-header span').textContent = '🔍 Lens (' + zoomLevel.toFixed(1) + 'x)';
+                  updateMirrorPosition();
+                }
+              }
+            });
+
+            if (zoomOutBtn) zoomOutBtn.addEventListener('click', function (e) {
+              e.stopPropagation();
+              if (zoomLevel > 1.5) {
+                zoomLevel = Math.round((zoomLevel - 0.5) * 10) / 10;
+                if (zoomLabel) zoomLabel.textContent = zoomLevel.toFixed(1) + 'x';
+                if (lensFrame) {
+                  lensFrame.querySelector('#lens-header span').textContent = '🔍 Lens (' + zoomLevel.toFixed(1) + 'x)';
+                  updateMirrorPosition();
+                }
+              }
+            });
+          }
+
+          return;
+        }
+
+        // Remove dock bar if active mode switched to floating
+        var existingDock = window.document.getElementById('heavenly-dock-root');
+        if (existingDock) existingDock.remove();
+
+        if (window.document.getElementById('heavenly-scroll-lock-root') || window.document.getElementById('heavenly-nav-root')) return;
 
         // --- 1. SCROLL LOCK WIDGET ---
         if (showScrollLock) {
@@ -1075,85 +1310,85 @@
         window.addEventListener('scroll', function () {
           if (magEnabled) updateMirrorPosition();
         }, { passive: true });
-      }
 
-      // --- 3. NAVIGATION WIDGET (Search Bar & Home Button) ---
-      if (showNavSearch || showNavHome) {
-        var navContainer = window.document.createElement('div');
-        navContainer.id = 'heavenly-nav-root';
-        navContainer.style.cssText = 'position:fixed;z-index:2147483646;user-select:none;-webkit-user-select:none;font-family:"Outfit",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;';
+        // --- 3. NAVIGATION WIDGET (Search Bar & Home Button) ---
+        if (showNavSearch || showNavHome) {
+          var navContainer = window.document.createElement('div');
+          navContainer.id = 'heavenly-nav-root';
+          navContainer.style.cssText = 'position:fixed;z-index:2147483646;user-select:none;-webkit-user-select:none;font-family:"Outfit",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;';
 
-        var navShadow = navContainer.attachShadow ? navContainer.attachShadow({ mode: 'open' }) : navContainer;
+          var navShadow = navContainer.attachShadow ? navContainer.attachShadow({ mode: 'open' }) : navContainer;
 
-        var navStyle = window.document.createElement('style');
-        navStyle.textContent = widgetCss + [
-          '.nav-input {',
-          '  background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(148, 163, 184, 0.3);',
-          '  color: #f8fafc; padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 500;',
-          '  outline: none; width: 140px; transition: border-color 0.2s, width 0.2s;',
-          '}',
-          '.nav-input:focus { border-color: #38bdf8; width: 180px; background: rgba(15, 23, 42, 0.95); }'
-        ].join('\n');
+          var navStyle = window.document.createElement('style');
+          navStyle.textContent = widgetCss + [
+            '.nav-input {',
+            '  background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(148, 163, 184, 0.3);',
+            '  color: #f8fafc; padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 500;',
+            '  outline: none; width: 140px; transition: border-color 0.2s, width 0.2s;',
+            '}',
+            '.nav-input:focus { border-color: #38bdf8; width: 180px; background: rgba(15, 23, 42, 0.95); }'
+          ].join('\n');
 
-        var navWidget = window.document.createElement('div');
-        navWidget.className = 'heavenly-widget';
+          var navWidget = window.document.createElement('div');
+          navWidget.className = 'heavenly-widget';
 
-        var navHtml = ['<div class="mini-icon" title="Navigation (Click to expand)"><svg class="title-icon" viewBox="0 0 24 24"><path d="M3 12h18M12 3l9 9-9 9"></path></svg></div>', '<div class="widget-content">'];
-        navHtml.push('<div class="drag-handle" title="Click and drag to move"><svg class="title-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg></div>');
+          var navHtml = ['<div class="mini-icon" title="Navigation (Click to expand)"><svg class="title-icon" viewBox="0 0 24 24"><path d="M3 12h18M12 3l9 9-9 9"></path></svg></div>', '<div class="widget-content">'];
+          navHtml.push('<div class="drag-handle" title="Click and drag to move"><svg class="title-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg></div>');
 
-        if (showNavSearch) {
-          navHtml.push('<input type="text" class="nav-input" id="nav-search-input" placeholder="Search or URL..." />');
-          navHtml.push('<button type="button" class="btn-ctrl" id="nav-go-btn">Go</button>');
-        }
-
-        if (showNavHome) {
-          navHtml.push('<button type="button" class="btn-ctrl" id="nav-home-btn" title="Go to Homepage">🏠 Home</button>');
-        }
-
-        navHtml.push('</div>');
-        navWidget.innerHTML = navHtml.join('\n');
-
-        navShadow.appendChild(navStyle);
-        navShadow.appendChild(navWidget);
-        var targetParent = window.document.body || window.document.documentElement;
-        if (targetParent) targetParent.appendChild(navContainer);
-
-        function handleNavigate() {
-          var input = navWidget.querySelector('#nav-search-input') || (navShadow.querySelector ? navShadow.querySelector('#nav-search-input') : null);
-          if (!input) return;
-          var val = input.value.trim();
-          if (!val) return;
-
-          if (val.substr(0, 4) !== "http") {
-            if (val.includes('.') && !val.includes(' ')) {
-              val = "https://" + val;
-            } else {
-              val = "https://google.com/search?q=" + encodeURIComponent(val);
-            }
+          if (showNavSearch) {
+            navHtml.push('<input type="text" class="nav-input" id="nav-search-input" placeholder="Search or URL..." />');
+            navHtml.push('<button type="button" class="btn-ctrl" id="nav-go-btn">Go</button>');
           }
-          window.location.href = window.location.protocol + '//' + window.location.host + '/proxy/' + val;
+
+          if (showNavHome) {
+            navHtml.push('<button type="button" class="btn-ctrl" id="nav-home-btn" title="Go to Homepage">🏠 Home</button>');
+          }
+
+          navHtml.push('</div>');
+          navWidget.innerHTML = navHtml.join('\n');
+
+          navShadow.appendChild(navStyle);
+          navShadow.appendChild(navWidget);
+          var targetParent = window.document.body || window.document.documentElement;
+          if (targetParent) targetParent.appendChild(navContainer);
+
+          function handleNavigate() {
+            var input = navWidget.querySelector('#nav-search-input') || (navShadow.querySelector ? navShadow.querySelector('#nav-search-input') : null);
+            if (!input) return;
+            var val = input.value.trim();
+            if (!val) return;
+
+            if (val.substr(0, 4) !== "http") {
+              if (val.includes('.') && !val.includes(' ')) {
+                val = "https://" + val;
+              } else {
+                val = "https://google.com/search?q=" + encodeURIComponent(val);
+              }
+            }
+            window.location.href = window.location.protocol + '//' + window.location.host + '/proxy/' + val;
+          }
+
+          if (showNavSearch) {
+            var goBtn = navWidget.querySelector('#nav-go-btn') || (navShadow.querySelector ? navShadow.querySelector('#nav-go-btn') : null);
+            var searchInput = navWidget.querySelector('#nav-search-input') || (navShadow.querySelector ? navShadow.querySelector('#nav-search-input') : null);
+
+            if (goBtn) goBtn.addEventListener('click', function (e) { e.stopPropagation(); handleNavigate(); });
+            if (searchInput) searchInput.addEventListener('keydown', function (e) {
+              e.stopPropagation();
+              if (e.key === 'Enter') handleNavigate();
+            });
+          }
+
+          if (showNavHome) {
+            var homeBtn = navWidget.querySelector('#nav-home-btn') || (navShadow.querySelector ? navShadow.querySelector('#nav-home-btn') : null);
+            if (homeBtn) homeBtn.addEventListener('click', function (e) {
+              e.stopPropagation();
+              window.location.href = 'https://heavenly-node.vercel.app/';
+            });
+          }
+
+          attachWidgetBehaviors(navContainer, navWidget, 'heavenly_nav_pos', 120, 20);
         }
-
-        if (showNavSearch) {
-          var goBtn = navWidget.querySelector('#nav-go-btn') || (navShadow.querySelector ? navShadow.querySelector('#nav-go-btn') : null);
-          var searchInput = navWidget.querySelector('#nav-search-input') || (navShadow.querySelector ? navShadow.querySelector('#nav-search-input') : null);
-
-          if (goBtn) goBtn.addEventListener('click', function (e) { e.stopPropagation(); handleNavigate(); });
-          if (searchInput) searchInput.addEventListener('keydown', function (e) {
-            e.stopPropagation();
-            if (e.key === 'Enter') handleNavigate();
-          });
-        }
-
-        if (showNavHome) {
-          var homeBtn = navWidget.querySelector('#nav-home-btn') || (navShadow.querySelector ? navShadow.querySelector('#nav-home-btn') : null);
-          if (homeBtn) homeBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            window.location.href = window.location.protocol + '//' + window.location.host + '/';
-          });
-        }
-
-        attachWidgetBehaviors(navContainer, navWidget, 'heavenly_nav_pos', 120, 20);
       }
 
       if (window.document && (window.document.readyState === 'interactive' || window.document.readyState === 'complete')) {

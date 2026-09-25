@@ -274,6 +274,164 @@
       text-decoration: underline;
     }
 
+    /* --- Modern Settings Modal Styles --- */
+    #settings-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 7, 18, 0.75);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      z-index: 99999;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      opacity: 0;
+      transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    #settings-modal.active {
+      display: flex;
+      opacity: 1;
+    }
+
+    .modal-card-container {
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 28px;
+      box-shadow:
+        0 25px 70px rgba(0, 0, 0, 0.85),
+        0 0 40px rgba(56, 189, 248, 0.25),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+      width: 100%;
+      max-width: 760px;
+      padding: 32px;
+      color: #f8fafc;
+      transform: scale(0.92) translateY(12px);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      max-height: 85vh;
+    }
+
+    #settings-modal.active .modal-card-container {
+      transform: scale(1) translateY(0);
+    }
+
+    /* Custom Sleek Scrollbar */
+    .custom-scroll {
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-track {
+      background: rgba(30, 41, 59, 0.3);
+      border-radius: 10px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(56, 189, 248, 0.35);
+      border-radius: 10px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(56, 189, 248, 0.6);
+    }
+
+    /* Setting Hero Cards */
+    .hero-card {
+      background: rgba(30, 41, 59, 0.45);
+      border: 1px solid rgba(56, 189, 248, 0.18);
+      border-radius: 18px;
+      padding: 18px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .hero-card:hover {
+      background: rgba(30, 41, 59, 0.65);
+      border-color: rgba(56, 189, 248, 0.4);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(56, 189, 248, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .hero-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .hero-card-title {
+      font-size: 0.98rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hero-card-desc {
+      font-size: 0.83rem;
+      color: #94a3b8;
+      line-height: 1.45;
+    }
+
+    /* Modern Switch Toggle */
+    .switch-toggle {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+
+    .switch-toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider-knob {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: rgba(51, 65, 85, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 30px;
+    }
+
+    .slider-knob:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #94a3b8;
+      transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 50%;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+
+    input:checked + .slider-knob {
+      background: linear-gradient(135deg, #38bdf8 0%, #3b82f6 100%);
+      border-color: #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+    }
+
+    input:checked + .slider-knob:before {
+      transform: translateX(22px);
+      background-color: #ffffff;
+    }
+
     @media (max-width: 640px) {
       .container {
         padding: 28px 20px 24px 20px;
@@ -289,6 +447,10 @@
 
       input[type="submit"] {
         width: 100%;
+      }
+
+      .modal-card-container {
+        padding: 20px 16px;
       }
     }
   </style>
@@ -347,8 +509,8 @@
     </div>
 
     <div style="text-align: center; margin-top: 18px;">
-      <button type="button" id="open-settings-btn" style="background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(56, 189, 248, 0.3); color: #e0f2fe; padding: 8px 16px; border-radius: 20px; font-size: 0.88rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
-        <svg style="width: 16px; height: 16px; fill: none; stroke: #38bdf8; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      <button type="button" id="open-settings-btn" style="background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(56, 189, 248, 0.3); color: #e0f2fe; padding: 10px 20px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.25s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+        <svg style="width: 18px; height: 18px; fill: none; stroke: #38bdf8; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
         <span>Settings & Cloaking</span>
       </button>
     </div>
@@ -360,111 +522,216 @@
   </div>
 
   <!-- Heavenly Settings Modal -->
-  <div id="settings-modal" style="display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.85); backdrop-filter: blur(16px); z-index: 99999; align-items: center; justify-content: center; padding: 20px; overflow-y: auto;">
-    <div style="background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(56, 189, 248, 0.2); width: 100%; max-width: 580px; padding: 28px; color: #f8fafc; font-family: 'Outfit', sans-serif;">
+  <div id="settings-modal">
+    <div class="modal-card-container">
 
-      <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(148, 163, 184, 0.15); padding-bottom: 16px; margin-bottom: 20px;">
-        <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.4rem; color: #38bdf8; margin: 0; display: flex; align-items: center; gap: 8px;">
-          ⚙️ Settings & Privacy Controls
-        </h2>
-        <button id="close-settings-btn" type="button" style="background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer;">✕</button>
+      <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(148, 163, 184, 0.15); padding-bottom: 18px; margin-bottom: 20px;">
+        <div>
+          <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; color: #38bdf8; margin: 0; display: flex; align-items: center; gap: 10px;">
+            ⚙️ Settings & Privacy Controls
+          </h2>
+          <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 4px;">Customize tab cloaking, panic triggers, and page widgets.</p>
+        </div>
+        <button id="close-settings-btn" type="button" style="background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(148, 163, 184, 0.2); color: #94a3b8; font-size: 1.2rem; cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">✕</button>
       </div>
 
-      <div style="display: flex; flex-direction: column; gap: 20px; max-height: 70vh; overflow-y: auto; padding-right: 6px;">
+      <div class="custom-scroll" style="display: flex; flex-direction: column; gap: 20px; padding-right: 6px;">
 
         <!-- Section 1: Cloaking -->
-        <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(56, 189, 248, 0.15); border-radius: 16px; padding: 16px;">
-          <h3 style="font-size: 1.05rem; color: #e0f2fe; margin-bottom: 6px; font-weight: 600;">🛡️ Tab Cloaking</h3>
-          <p style="font-size: 0.83rem; color: #94a3b8; margin-bottom: 12px; line-height: 1.4;">Disguise your browser tab title and favicon to look like standard school/work apps.</p>
+        <div>
+          <h3 style="font-size: 1.1rem; color: #e0f2fe; margin-bottom: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+            🛡️ Tab Cloaking
+          </h3>
 
-          <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; cursor: pointer; font-size: 0.9rem;">
-            <input type="checkbox" id="set-auto-cloak" style="accent-color: #38bdf8; width: 16px; height: 16px;">
-            <span>Auto Tab Cloaking (Cloaks tab title/icon when switching to another tab)</span>
-          </label>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
 
-          <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; cursor: pointer; font-size: 0.9rem;">
-            <input type="checkbox" id="set-persistent-cloak" style="accent-color: #38bdf8; width: 16px; height: 16px;">
-            <span>Persistent Cloaking (Keeps tab disguised continuously)</span>
-          </label>
-
-          <div style="margin-bottom: 12px;">
-            <label style="font-size: 0.85rem; color: #cbd5e1; display: block; margin-bottom: 4px;">Cloak Preset:</label>
-            <select id="preset-select" style="width: 100%; padding: 8px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 10px; color: #f8fafc; font-family: inherit; font-size: 0.88rem;">
-              <option value="classroom">Google Classroom (Default)</option>
-              <option value="drive">Google Drive</option>
-              <option value="canvas">Canvas LMS</option>
-              <option value="khan">Khan Academy</option>
-            </select>
-          </div>
-
-          <!-- Custom Preset Creator -->
-          <div style="border-top: 1px solid rgba(148, 163, 184, 0.1); padding-top: 10px; margin-top: 10px;">
-            <span style="font-size: 0.85rem; color: #cbd5e1; font-weight: 600;">Custom Cloak Preset</span>
-            <div style="display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap;">
-              <input type="text" id="custom-title" placeholder="Title (e.g. Classes)" style="flex: 1; min-width: 140px; padding: 6px 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; color: #fff; font-size: 0.83rem;">
-              <input type="text" id="custom-icon" placeholder="Icon URL (.ico/.png)" style="flex: 1; min-width: 140px; padding: 6px 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; color: #fff; font-size: 0.83rem;">
+            <!-- Hero Card: Auto Cloak -->
+            <div class="hero-card">
+              <div class="hero-card-header">
+                <span class="hero-card-title">Auto Tab Cloaking</span>
+                <label class="switch-toggle">
+                  <input type="checkbox" id="set-auto-cloak">
+                  <span class="slider-knob"></span>
+                </label>
+              </div>
+              <p class="hero-card-desc">Automatically disguises your browser tab title and icon when you switch focus to another window or tab.</p>
             </div>
-            <div style="display: flex; gap: 8px; margin-top: 8px;">
-              <button id="save-custom-preset-btn" type="button" style="padding: 6px 12px; background: #38bdf8; border: none; border-radius: 8px; color: #030712; font-weight: 600; font-size: 0.8rem; cursor: pointer;">Save Custom Preset</button>
-              <button id="delete-custom-preset-btn" type="button" style="padding: 6px 12px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 8px; color: #fca5a5; font-weight: 600; font-size: 0.8rem; cursor: pointer;">Delete Selected</button>
+
+            <!-- Hero Card: Persistent Cloak -->
+            <div class="hero-card">
+              <div class="hero-card-header">
+                <span class="hero-card-title">Persistent Cloaking</span>
+                <label class="switch-toggle">
+                  <input type="checkbox" id="set-persistent-cloak">
+                  <span class="slider-knob"></span>
+                </label>
+              </div>
+              <p class="hero-card-desc">Continuously keeps your browser tab title and favicon disguised regardless of tab visibility.</p>
             </div>
+
+            <!-- Hero Card: Presets -->
+            <div class="hero-card">
+              <div style="margin-bottom: 8px;">
+                <span class="hero-card-title" style="margin-bottom: 4px;">Cloak Preset</span>
+                <p class="hero-card-desc">Select an app identity to mimic in your browser tab.</p>
+              </div>
+              <select id="preset-select" style="width: 100%; padding: 10px 14px; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 12px; color: #f8fafc; font-family: inherit; font-size: 0.9rem; outline: none; cursor: pointer;">
+                <option value="classroom">Google Classroom (Default)</option>
+                <option value="drive">Google Drive</option>
+                <option value="canvas">Canvas LMS</option>
+                <option value="khan">Khan Academy</option>
+              </select>
+
+              <!-- Custom Preset Creator -->
+              <div style="border-top: 1px solid rgba(148, 163, 184, 0.12); padding-top: 12px; margin-top: 10px;">
+                <span style="font-size: 0.88rem; color: #cbd5e1; font-weight: 600; display: block; margin-bottom: 6px;">Custom Cloak Preset</span>
+                <div style="display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap;">
+                  <input type="text" id="custom-title" placeholder="Title (e.g. Classes)" style="flex: 1; min-width: 140px; padding: 8px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 10px; color: #fff; font-size: 0.85rem;">
+                  <input type="text" id="custom-icon" placeholder="Icon URL (.ico/.png)" style="flex: 1; min-width: 140px; padding: 8px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 10px; color: #fff; font-size: 0.85rem;">
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 10px;">
+                  <button id="save-custom-preset-btn" type="button" style="padding: 8px 14px; background: linear-gradient(135deg, #38bdf8 0%, #3b82f6 100%); border: none; border-radius: 10px; color: #030712; font-weight: 600; font-size: 0.83rem; cursor: pointer;">Save Custom Preset</button>
+                  <button id="delete-custom-preset-btn" type="button" style="padding: 8px 14px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 10px; color: #fca5a5; font-weight: 600; font-size: 0.83rem; cursor: pointer;">Delete Selected</button>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
         <!-- Section 2: Panic Features -->
-        <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(56, 189, 248, 0.15); border-radius: 16px; padding: 16px;">
-          <h3 style="font-size: 1.05rem; color: #e0f2fe; margin-bottom: 6px; font-weight: 600;">🚨 Panic Controls</h3>
-          <p style="font-size: 0.83rem; color: #94a3b8; margin-bottom: 12px; line-height: 1.4;">Instantly redirect the page to a safe educational site when triggered.</p>
+        <div>
+          <h3 style="font-size: 1.1rem; color: #e0f2fe; margin-bottom: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+            🚨 Panic Controls
+          </h3>
 
-          <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; cursor: pointer; font-size: 0.9rem;">
-            <input type="checkbox" id="set-panic-key-enable" style="accent-color: #38bdf8; width: 16px; height: 16px;">
-            <span>Enable Panic Key Shortcut</span>
-          </label>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
 
-          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 12px;">
-            <label style="font-size: 0.85rem; color: #cbd5e1;">Panic Key:</label>
-            <input type="text" id="set-panic-key" value="`" maxlength="10" style="width: 70px; text-align: center; padding: 4px 8px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; color: #38bdf8; font-weight: 700; font-size: 0.9rem;">
-          </div>
+            <!-- Hero Card: Panic Key -->
+            <div class="hero-card">
+              <div class="hero-card-header">
+                <span class="hero-card-title">Panic Key Shortcut</span>
+                <label class="switch-toggle">
+                  <input type="checkbox" id="set-panic-key-enable">
+                  <span class="slider-knob"></span>
+                </label>
+              </div>
+              <p class="hero-card-desc">Instantly redirects your active session to a safe educational website when a key is pressed.</p>
+              <div style="display: flex; gap: 10px; align-items: center; margin-top: 6px;">
+                <label style="font-size: 0.85rem; color: #cbd5e1;">Panic Key:</label>
+                <input type="text" id="set-panic-key" value="`" maxlength="10" style="width: 80px; text-align: center; padding: 6px 10px; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 10px; color: #38bdf8; font-weight: 700; font-size: 0.95rem;">
+              </div>
+            </div>
 
-          <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; cursor: pointer; font-size: 0.9rem;">
-            <input type="checkbox" id="set-touch-panic" style="accent-color: #38bdf8; width: 16px; height: 16px;">
-            <span>Enable Touch Panic Overlay (Floating red panic button for touchscreens)</span>
-          </label>
+            <!-- Hero Card: Touch Panic -->
+            <div class="hero-card">
+              <div class="hero-card-header">
+                <span class="hero-card-title">Touch Panic Overlay</span>
+                <label class="switch-toggle">
+                  <input type="checkbox" id="set-touch-panic">
+                  <span class="slider-knob"></span>
+                </label>
+              </div>
+              <p class="hero-card-desc">Displays a floating emergency panic button designed for quick tap access on touchscreen devices.</p>
+            </div>
 
-          <div>
-            <label style="font-size: 0.85rem; color: #cbd5e1; display: block; margin-bottom: 4px;">Panic Redirect URL:</label>
-            <input type="text" id="set-panic-url" value="https://classroom.google.com" style="width: 100%; padding: 8px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 10px; color: #f8fafc; font-family: inherit; font-size: 0.88rem;">
+            <!-- Hero Card: Panic URL -->
+            <div class="hero-card">
+              <span class="hero-card-title" style="margin-bottom: 2px;">Panic Redirect URL</span>
+              <p class="hero-card-desc" style="margin-bottom: 8px;">Target URL to redirect to when panic controls are triggered.</p>
+              <input type="text" id="set-panic-url" value="https://classroom.google.com" style="width: 100%; padding: 10px 14px; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 12px; color: #f8fafc; font-family: inherit; font-size: 0.88rem;">
+            </div>
+
           </div>
         </div>
 
         <!-- Section 3: Widget Controls & Reset -->
-        <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(56, 189, 248, 0.15); border-radius: 16px; padding: 16px;">
-          <h3 style="font-size: 1.05rem; color: #e0f2fe; margin-bottom: 6px; font-weight: 600;">🎛️ Proxied Page Widgets</h3>
-          <p style="font-size: 0.83rem; color: #94a3b8; margin-bottom: 12px; line-height: 1.4;">Toggle widget visibility or reset their positions if they get off-screen.</p>
+        <div>
+          <h3 style="font-size: 1.1rem; color: #e0f2fe; margin-bottom: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+            🎛️ Proxied Page Widgets
+          </h3>
 
-          <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; cursor: pointer; font-size: 0.9rem;">
-            <input type="checkbox" id="set-show-scroll-lock" checked style="accent-color: #38bdf8; width: 16px; height: 16px;">
-            <span>Enable Scroll Lock Widget</span>
-          </label>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
 
-          <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; cursor: pointer; font-size: 0.9rem;">
-            <input type="checkbox" id="set-show-magnifier" checked style="accent-color: #38bdf8; width: 16px; height: 16px;">
-            <span>Enable Magnifier Widget</span>
-          </label>
+            <!-- Hero Card: Scroll Lock -->
+            <div class="hero-card">
+              <div class="hero-card-header">
+                <span class="hero-card-title">Scroll Lock Widget</span>
+                <label class="switch-toggle">
+                  <input type="checkbox" id="set-show-scroll-lock" checked>
+                  <span class="slider-knob"></span>
+                </label>
+              </div>
+              <p class="hero-card-desc">Displays a floating widget on proxied pages to toggle lock/unlock page scrolling.</p>
+            </div>
 
-          <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; cursor: pointer; font-size: 0.9rem;">
-            <input type="checkbox" id="set-show-nav-search" checked style="accent-color: #38bdf8; width: 16px; height: 16px;">
-            <span>Enable Quick Search Bar in Navigation Widget</span>
-          </label>
+            <!-- Hero Card: Magnifier -->
+            <div class="hero-card">
+              <div class="hero-card-header">
+                <span class="hero-card-title">Magnifier Widget</span>
+                <label class="switch-toggle">
+                  <input type="checkbox" id="set-show-magnifier" checked>
+                  <span class="slider-knob"></span>
+                </label>
+              </div>
+              <p class="hero-card-desc">Displays a interactive magnifying glass lens widget on proxied web pages.</p>
+            </div>
 
-          <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; cursor: pointer; font-size: 0.9rem;">
-            <input type="checkbox" id="set-show-nav-home" checked style="accent-color: #38bdf8; width: 16px; height: 16px;">
-            <span>Enable Home Button in Navigation Widget</span>
-          </label>
+            <!-- Hero Card: Quick Search Bar -->
+            <div class="hero-card">
+              <div class="hero-card-header">
+                <span class="hero-card-title">Navigation Quick Search Bar</span>
+                <label class="switch-toggle">
+                  <input type="checkbox" id="set-show-nav-search" checked>
+                  <span class="slider-knob"></span>
+                </label>
+              </div>
+              <p class="hero-card-desc">Includes an inline search/URL bar inside the navigation widget on proxied pages.</p>
+            </div>
 
-          <button id="reset-widget-pos-btn" type="button" style="width: 100%; padding: 10px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 10px; color: #38bdf8; font-weight: 600; font-size: 0.88rem; cursor: pointer; transition: all 0.2s ease;">
-            📍 Reset All Widget Positions to Middle of Screen
-          </button>
+            <!-- Hero Card: Home Button -->
+            <div class="hero-card">
+              <div class="hero-card-header">
+                <span class="hero-card-title">Navigation Home Button</span>
+                <label class="switch-toggle">
+                  <input type="checkbox" id="set-show-nav-home" checked>
+                  <span class="slider-knob"></span>
+                </label>
+              </div>
+              <p class="hero-card-desc">Includes a Home button in the floating widget to quickly return to Heavenly.</p>
+            </div>
+
+            <!-- Hero Card: Collapsible Widget Dock Bar -->
+            <div class="hero-card">
+              <div class="hero-card-header">
+                <span class="hero-card-title">Enable Collapsible Widget Dock Bar</span>
+                <label class="switch-toggle">
+                  <input type="checkbox" id="set-use-widget-dock">
+                  <span class="slider-knob"></span>
+                </label>
+              </div>
+              <p class="hero-card-desc">Docks all active widgets inside a collapsible bar on the screen edge with a blue arrow pull tab.</p>
+              <div style="display: flex; gap: 10px; align-items: center; margin-top: 6px;">
+                <label style="font-size: 0.85rem; color: #cbd5e1;">Dock Position:</label>
+                <select id="set-dock-position" style="flex: 1; padding: 6px 10px; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 10px; color: #f8fafc; font-family: inherit; font-size: 0.88rem; outline: none; cursor: pointer;">
+                  <option value="bottom">Bottom Edge (Default)</option>
+                  <option value="top">Top Edge</option>
+                  <option value="left">Left Edge</option>
+                  <option value="right">Right Edge</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Hero Card: Reset Widget Positions -->
+            <div class="hero-card" style="align-items: center; text-align: center; background: rgba(56, 189, 248, 0.08); border-color: rgba(56, 189, 248, 0.3);">
+              <span class="hero-card-title" style="color: #38bdf8;">Widget Screen Position Reset</span>
+              <p class="hero-card-desc" style="margin-bottom: 8px;">Restores all widget floating positions back to the center of your screen.</p>
+              <button id="reset-widget-pos-btn" type="button" style="width: 100%; padding: 12px; background: linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 12px; color: #38bdf8; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s ease;">
+                📍 Reset All Widget Positions
+              </button>
+            </div>
+
+          </div>
         </div>
 
       </div>
@@ -507,7 +774,7 @@
 
     // --- Heavenly Settings Manager ---
     var DEFAULT_PRESETS = {
-      classroom: { title: "Classes", icon: "https://ssl.gstatic.com/classroom/favicon.png" },
+      classroom: { title: "Google Classroom", icon: "https://ssl.gstatic.com/classroom/favicon.png" },
       drive: { title: "My Drive - Google Drive", icon: "https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" },
       canvas: { title: "Dashboard", icon: "https://du1ux2871uqvu.cloudfront.net/dist/images/favicon-e10d657a73.ico" },
       khan: { title: "Dashboard | Khan Academy", icon: "https://www.khanacademy.org/favicon.ico" }
@@ -531,7 +798,9 @@
         showScrollLock: saved.showScrollLock !== undefined ? saved.showScrollLock : true,
         showMagnifier: saved.showMagnifier !== undefined ? saved.showMagnifier : true,
         showNavSearch: saved.showNavSearch !== undefined ? saved.showNavSearch : true,
-        showNavHome: saved.showNavHome !== undefined ? saved.showNavHome : true
+        showNavHome: saved.showNavHome !== undefined ? saved.showNavHome : true,
+        useWidgetDock: saved.useWidgetDock || false,
+        dockPosition: saved.dockPosition || 'bottom'
       };
     }
 
@@ -553,6 +822,8 @@
       $('set-show-magnifier').checked = settings.showMagnifier;
       $('set-show-nav-search').checked = settings.showNavSearch;
       $('set-show-nav-home').checked = settings.showNavHome;
+      $('set-use-widget-dock').checked = settings.useWidgetDock;
+      $('set-dock-position').value = settings.dockPosition;
 
       // Populate preset dropdown
       var select = $('preset-select');
@@ -568,14 +839,66 @@
       }
     }
 
+    // --- Landing Page Tab Cloaking ---
+    var originalTitle = document.title;
+    var originalFavicon = null;
+    var favEl = document.querySelector("link[rel*='icon']");
+    if (favEl) originalFavicon = favEl.href;
+
+    function applyLandingCloak(isCloaked) {
+      var settings = loadSettings();
+      var allPresets = Object.assign({}, DEFAULT_PRESETS, settings.customPresets);
+      var preset = allPresets[settings.selectedPreset] || DEFAULT_PRESETS.classroom;
+
+      if (isCloaked) {
+        document.title = preset.title;
+        var link = document.querySelector("link[rel*='icon']") || document.createElement('link');
+        link.type = 'image/x-icon';
+        link.rel = 'shortcut icon';
+        link.href = preset.icon;
+        document.getElementsByTagName('head')[0].appendChild(link);
+      } else {
+        document.title = originalTitle;
+        if (originalFavicon) {
+          var link2 = document.querySelector("link[rel*='icon']");
+          if (link2) link2.href = originalFavicon;
+        }
+      }
+    }
+
+    function syncLandingCloak() {
+      var settings = loadSettings();
+      if (settings.persistentCloak) {
+        applyLandingCloak(true);
+      } else if (settings.autoCloak && document.hidden) {
+        applyLandingCloak(true);
+      } else {
+        applyLandingCloak(false);
+      }
+    }
+
+    function initLandingCloak() {
+      syncLandingCloak();
+      document.addEventListener('visibilitychange', function () {
+        syncLandingCloak();
+      });
+    }
+
     function bindSettingsEvents() {
       $('open-settings-btn').onclick = function () {
         syncSettingsToUI();
-        $('settings-modal').style.display = 'flex';
+        $('settings-modal').classList.add('active');
       };
 
       $('close-settings-btn').onclick = function () {
-        $('settings-modal').style.display = 'none';
+        $('settings-modal').classList.remove('active');
+      };
+
+      // Close modal on background overlay click
+      $('settings-modal').onclick = function (e) {
+        if (e.target === $('settings-modal')) {
+          $('settings-modal').classList.remove('active');
+        }
       };
 
       var updateHandler = function () {
@@ -590,11 +913,14 @@
         settings.showMagnifier = $('set-show-magnifier').checked;
         settings.showNavSearch = $('set-show-nav-search').checked;
         settings.showNavHome = $('set-show-nav-home').checked;
+        settings.useWidgetDock = $('set-use-widget-dock').checked;
+        settings.dockPosition = $('set-dock-position').value;
         settings.selectedPreset = $('preset-select').value;
         saveSettings(settings);
+        syncLandingCloak();
       };
 
-      ['set-auto-cloak', 'set-persistent-cloak', 'set-panic-key-enable', 'set-touch-panic', 'set-show-scroll-lock', 'set-show-magnifier', 'set-show-nav-search', 'set-show-nav-home', 'preset-select'].forEach(function (id) {
+      ['set-auto-cloak', 'set-persistent-cloak', 'set-panic-key-enable', 'set-touch-panic', 'set-show-scroll-lock', 'set-show-magnifier', 'set-show-nav-search', 'set-show-nav-home', 'set-use-widget-dock', 'set-dock-position', 'preset-select'].forEach(function (id) {
         $(id).onchange = updateHandler;
       });
 
@@ -614,6 +940,7 @@
         settings.selectedPreset = customId;
         saveSettings(settings);
         syncSettingsToUI();
+        syncLandingCloak();
         $('custom-title').value = '';
         $('custom-icon').value = '';
       };
@@ -629,6 +956,7 @@
         settings.selectedPreset = 'classroom';
         saveSettings(settings);
         syncSettingsToUI();
+        syncLandingCloak();
       };
 
       // Reset positions to middle of screen
@@ -649,6 +977,7 @@
       $('url').focus();
       checkError();
       bindSettingsEvents();
+      initLandingCloak();
     }
   </script>
 
