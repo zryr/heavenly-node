@@ -568,6 +568,51 @@
       }
     }
 
+    // --- Landing Page Tab Cloaking ---
+    var originalTitle = document.title;
+    var originalFavicon = null;
+    var favEl = document.querySelector("link[rel*='icon']");
+    if (favEl) originalFavicon = favEl.href;
+
+    function applyLandingCloak(isCloaked) {
+      var settings = loadSettings();
+      var allPresets = Object.assign({}, DEFAULT_PRESETS, settings.customPresets);
+      var preset = allPresets[settings.selectedPreset] || DEFAULT_PRESETS.classroom;
+
+      if (isCloaked) {
+        document.title = preset.title;
+        var link = document.querySelector("link[rel*='icon']") || document.createElement('link');
+        link.type = 'image/x-icon';
+        link.rel = 'shortcut icon';
+        link.href = preset.icon;
+        document.getElementsByTagName('head')[0].appendChild(link);
+      } else {
+        document.title = originalTitle;
+        if (originalFavicon) {
+          var link2 = document.querySelector("link[rel*='icon']");
+          if (link2) link2.href = originalFavicon;
+        }
+      }
+    }
+
+    function syncLandingCloak() {
+      var settings = loadSettings();
+      if (settings.persistentCloak) {
+        applyLandingCloak(true);
+      } else if (settings.autoCloak && document.hidden) {
+        applyLandingCloak(true);
+      } else {
+        applyLandingCloak(false);
+      }
+    }
+
+    function initLandingCloak() {
+      syncLandingCloak();
+      document.addEventListener('visibilitychange', function () {
+        syncLandingCloak();
+      });
+    }
+
     function bindSettingsEvents() {
       $('open-settings-btn').onclick = function () {
         syncSettingsToUI();
@@ -592,6 +637,7 @@
         settings.showNavHome = $('set-show-nav-home').checked;
         settings.selectedPreset = $('preset-select').value;
         saveSettings(settings);
+        syncLandingCloak();
       };
 
       ['set-auto-cloak', 'set-persistent-cloak', 'set-panic-key-enable', 'set-touch-panic', 'set-show-scroll-lock', 'set-show-magnifier', 'set-show-nav-search', 'set-show-nav-home', 'preset-select'].forEach(function (id) {
@@ -614,6 +660,7 @@
         settings.selectedPreset = customId;
         saveSettings(settings);
         syncSettingsToUI();
+        syncLandingCloak();
         $('custom-title').value = '';
         $('custom-icon').value = '';
       };
@@ -629,6 +676,7 @@
         settings.selectedPreset = 'classroom';
         saveSettings(settings);
         syncSettingsToUI();
+        syncLandingCloak();
       };
 
       // Reset positions to middle of screen
@@ -649,6 +697,7 @@
       $('url').focus();
       checkError();
       bindSettingsEvents();
+      initLandingCloak();
     }
   </script>
 

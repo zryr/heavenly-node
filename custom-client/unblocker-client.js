@@ -1149,7 +1149,7 @@
           var homeBtn = navWidget.querySelector('#nav-home-btn') || (navShadow.querySelector ? navShadow.querySelector('#nav-home-btn') : null);
           if (homeBtn) homeBtn.addEventListener('click', function (e) {
             e.stopPropagation();
-            window.location.href = window.location.protocol + '//' + window.location.host + '/';
+            window.location.href = 'https://heavenly-node.vercel.app/';
           });
         }
 
