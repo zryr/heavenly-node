@@ -630,6 +630,17 @@
         '.btn-toggle.active {',
         '  background: linear-gradient(135deg, #38bdf8 0%, #60a5fa 100%);',
         '  border: 1px solid transparent; color: #030712; box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);',
+        '}',
+        '.nav-input {',
+        '  background: rgba(30, 41, 59, 0.85); border: 1px solid rgba(148, 163, 184, 0.35);',
+        '  color: #f8fafc; padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 500;',
+        '  outline: none; width: 150px; transition: border-color 0.2s, width 0.2s, box-shadow 0.2s;',
+        '  font-family: inherit;',
+        '}',
+        '.nav-input::placeholder { color: #94a3b8; }',
+        '.nav-input:focus {',
+        '  border-color: #38bdf8; width: 190px; background: rgba(15, 23, 42, 0.95);',
+        '  box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);',
         '}'
       ].join('\n');
 
