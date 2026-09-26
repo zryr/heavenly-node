@@ -20,12 +20,13 @@ var app = express();
 
 var google_analytics_id = process.env.GA_ID || null;
 
-function addGa(html) {
-    if (google_analytics_id) {
+function addGa(html, gaId) {
+    var id = gaId !== undefined ? gaId : (process.env.GA_ID || google_analytics_id);
+    if (id) {
         var ga = [
             "<script type=\"text/javascript\">",
             "var _gaq = []; // overwrite the existing one, if any",
-            "_gaq.push(['_setAccount', '" + google_analytics_id + "']);",
+            "_gaq.push(['_setAccount', '" + id + "']);",
             "_gaq.push(['_trackPageview']);",
             "(function() {",
             "  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;",
@@ -86,6 +87,13 @@ app.get("/no-js", function(req, res) {
 
 const port = process.env.PORT || process.env.VCAP_APP_PORT || 8080;
 
-app.listen(port, function() {
-    console.log(`node unblocker process listening at http://localhost:${port}/`);
-}).on("upgrade", unblocker.onUpgrade); // onUpgrade handles websockets
+if (require.main === module) {
+    app.listen(port, function() {
+        console.log(`node unblocker process listening at http://localhost:${port}/`);
+    }).on("upgrade", unblocker.onUpgrade); // onUpgrade handles websockets
+}
+
+module.exports = {
+    addGa: addGa,
+    app: app
+};
