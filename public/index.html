@@ -637,17 +637,17 @@
   </div>
 
   <!-- Heavenly Settings Modal -->
-  <div id="settings-modal">
+  <div id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
     <div class="modal-card-container">
 
       <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(148, 163, 184, 0.15); padding-bottom: 18px; margin-bottom: 20px;">
         <div>
-          <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; color: #38bdf8; margin: 0; display: flex; align-items: center; gap: 10px;">
+          <h2 id="settings-modal-title" style="font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; color: #38bdf8; margin: 0; display: flex; align-items: center; gap: 10px;">
             ⚙️ Settings & Privacy Controls
           </h2>
           <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 4px;">Customize tab cloaking, panic triggers, and page widgets.</p>
         </div>
-        <button id="close-settings-btn" type="button" style="background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(148, 163, 184, 0.2); color: #94a3b8; font-size: 1.2rem; cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">✕</button>
+        <button id="close-settings-btn" type="button" aria-label="Close settings" style="background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(148, 163, 184, 0.2); color: #94a3b8; font-size: 1.2rem; cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">✕</button>
       </div>
 
       <div class="custom-scroll" style="display: flex; flex-direction: column; gap: 20px; padding-right: 6px;">
@@ -999,22 +999,33 @@
       });
     }
 
+    function closeSettingsModal() {
+      $('settings-modal').classList.remove('active');
+      $('open-settings-btn').focus();
+    }
+
     function bindSettingsEvents() {
       $('open-settings-btn').onclick = function () {
         syncSettingsToUI();
         $('settings-modal').classList.add('active');
+        $('close-settings-btn').focus();
       };
 
-      $('close-settings-btn').onclick = function () {
-        $('settings-modal').classList.remove('active');
-      };
+      $('close-settings-btn').onclick = closeSettingsModal;
 
       // Close modal on background overlay click
       $('settings-modal').onclick = function (e) {
         if (e.target === $('settings-modal')) {
-          $('settings-modal').classList.remove('active');
+          closeSettingsModal();
         }
       };
+
+      // Close modal on Escape key press
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && $('settings-modal').classList.contains('active')) {
+          closeSettingsModal();
+        }
+      });
 
       var updateHandler = function () {
         var settings = loadSettings();
