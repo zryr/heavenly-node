@@ -73,12 +73,58 @@ app.use(unblocker);
 // serve up static files *after* the proxy is run
 app.use('/', express.static(__dirname + '/public'));
 
+function sanitizeUrl(site) {
+    if (Array.isArray(site)) {
+        site = site[0];
+    }
+    if (!site || typeof site !== 'string') {
+        return null;
+    }
+    site = site.trim();
+    if (!site) {
+        return null;
+    }
+
+    // Strip any leading slashes, backslashes, or dots if not starting with http:// or https://
+    if (!/^https?:\/\//i.test(site)) {
+        site = site.replace(/^[\/\\.]+/, '');
+        if (!site) {
+            return null;
+        }
+    }
+
+    var targetUrl;
+    if (/^https?:\/\//i.test(site)) {
+        targetUrl = site;
+    } else if (site.indexOf('.') !== -1 && site.indexOf(' ') === -1 && !/^[a-zA-Z0-9+-.]+:/.test(site)) {
+        targetUrl = 'https://' + site;
+    } else {
+        targetUrl = 'https://www.google.com/search?q=' + encodeURIComponent(site);
+    }
+
+    try {
+        var parsed = new URL(targetUrl);
+        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+            return targetUrl;
+        }
+    } catch (e) {
+        return 'https://www.google.com/search?q=' + encodeURIComponent(site);
+    }
+
+    return null;
+}
+
 // this is for users who's form actually submitted due to JS being disabled or whatever
 app.get("/no-js", function(req, res) {
-    // grab the "url" parameter from the querystring
-    var site = querystring.parse(url.parse(req.url).query).url;
-    // and redirect the user to /proxy/url
-    res.redirect(unblockerConfig.prefix + site);
+    var query = url.parse(req.url, true).query;
+    var site = query ? query.url : null;
+    var targetUrl = sanitizeUrl(site);
+
+    if (!targetUrl) {
+        return res.redirect('/');
+    }
+
+    res.redirect(unblockerConfig.prefix + targetUrl);
 });
 
 app.addGa = addGa;
