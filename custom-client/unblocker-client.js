@@ -928,19 +928,29 @@
             });
           }
 
+          function updateLockUI(btn, isEnabled) {
+            if (!btn) return;
+            if (isEnabled) {
+              btn.classList.add('active');
+              btn.innerHTML = '<span>🔒 ON</span>';
+            } else {
+              btn.classList.remove('active');
+              btn.innerHTML = '<span>🔓 OFF</span>';
+            }
+          }
+
+          function toggleLockState() {
+            scrollLockEnabled = !scrollLockEnabled;
+            return scrollLockEnabled;
+          }
+
           // Wire up Scroll Lock
           if (showScrollLock) {
             var scrollBtn = dockBar.querySelector('#dock-scroll-btn');
             if (scrollBtn) scrollBtn.addEventListener('click', function (e) {
               e.stopPropagation();
-              scrollLockEnabled = !scrollLockEnabled;
-              if (scrollLockEnabled) {
-                scrollBtn.classList.add('active');
-                scrollBtn.innerHTML = '<span>🔒 ON</span>';
-              } else {
-                scrollBtn.classList.remove('active');
-                scrollBtn.innerHTML = '<span>🔓 OFF</span>';
-              }
+              var newState = toggleLockState();
+              updateLockUI(scrollBtn, newState);
             });
           }
 
@@ -1030,14 +1040,8 @@
           var lockToggleBtn = lockShadow.querySelector('#toggle-btn');
           lockToggleBtn.addEventListener('click', function (e) {
             e.stopPropagation();
-            scrollLockEnabled = !scrollLockEnabled;
-            if (scrollLockEnabled) {
-              lockToggleBtn.classList.add('active');
-              lockToggleBtn.innerHTML = '<span>🔒 ON</span>';
-            } else {
-              lockToggleBtn.classList.remove('active');
-              lockToggleBtn.innerHTML = '<span>🔓 OFF</span>';
-            }
+            var newState = toggleLockState();
+            updateLockUI(lockToggleBtn, newState);
           });
 
           attachWidgetBehaviors(lockContainer, lockWidget, 'heavenly_scroll_lock_pos', 20, 20);
