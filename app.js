@@ -86,6 +86,12 @@ app.get("/no-js", function(req, res) {
 
 const port = process.env.PORT || process.env.VCAP_APP_PORT || 8080;
 
-app.listen(port, function() {
-    console.log(`node unblocker process listening at http://localhost:${port}/`);
-}).on("upgrade", unblocker.onUpgrade); // onUpgrade handles websockets
+if (require.main === module) {
+    app.listen(port, function() {
+        console.log(`node unblocker process listening at http://localhost:${port}/`);
+    }).on("upgrade", unblocker.onUpgrade); // onUpgrade handles websockets
+}
+
+module.exports = app;
+module.exports.googleAnalyticsMiddleware = googleAnalyticsMiddleware;
+module.exports.addGa = addGa;
