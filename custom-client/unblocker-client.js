@@ -1224,13 +1224,11 @@
           // Mirror clone of document body
           var clone = window.document.body.cloneNode(true);
           // Remove heavenly roots from clone to avoid infinite duplication
-          var rootIds = ['heavenly-scroll-lock-root', 'heavenly-magnifier-root', 'heavenly-nav-root', 'heavenly-touch-panic-root', 'heavenly-dock-root'];
-          for (var rIdx = 0; rIdx < rootIds.length; rIdx++) {
-            var rootEl = clone.querySelector('#' + rootIds[rIdx]);
-            if (rootEl) {
-              if (rootEl.remove) rootEl.remove();
-              else if (rootEl.parentNode) rootEl.parentNode.removeChild(rootEl);
-            }
+          var roots = clone.querySelectorAll('#heavenly-scroll-lock-root, #heavenly-magnifier-root, #heavenly-nav-root, #heavenly-touch-panic-root, #heavenly-dock-root');
+          for (var rIdx = 0; rIdx < roots.length; rIdx++) {
+            var rootEl = roots[rIdx];
+            if (rootEl.remove) rootEl.remove();
+            else if (rootEl.parentNode) rootEl.parentNode.removeChild(rootEl);
           }
 
           // Copy canvas content if present
