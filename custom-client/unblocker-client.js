@@ -197,8 +197,7 @@
         var wsProto = isSecure ? "ws" + wsSecure + "://" : "ws://";
         var wsHost = parsedUrl[2];
         // deal with "relative" js that uses the current url rather than a hard-coded one
-        if (wsHost === winLoc.host || wsHost === winLoc.hostname) {
-          // todo: handle situation where ws hostname === location.hostname but ports differ
+        if (wsHost.split(":")[0] === winLoc.hostname) {
           wsHost = targetURL.host;
         }
         var wsPath = parsedUrl[3];
