@@ -875,15 +875,33 @@
     };
 
     function checkError() {
-      var search = window.location.search;
-      var start = search.indexOf('error=');
-      if (start > -1) {
-        var stop = search.indexOf('&', start);
-        if (stop == -1) { stop = undefined; }
-        var err = search.substr(start + 6, stop);
+      var err = null;
+      try {
+        if (typeof URLSearchParams !== 'undefined') {
+          var params = new URLSearchParams(window.location.search);
+          err = params.get('error');
+        } else {
+          var search = window.location.search;
+          var start = search.indexOf('error=');
+          if (start > -1) {
+            var stop = search.indexOf('&', start);
+            if (stop === -1) { stop = search.length; }
+            err = search.substring(start + 6, stop);
+            try {
+              err = decodeURIComponent(err);
+            } catch (e) {}
+          }
+        }
+      } catch (e) {
+        err = null;
+      }
+
+      if (err) {
         var $error = $('error');
-        $error.innerText = $error.textContent = decodeURIComponent(err);
-        $error.style.display = "block";
+        if ($error) {
+          $error.textContent = err;
+          $error.style.display = "block";
+        }
       }
     }
 
